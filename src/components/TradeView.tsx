@@ -199,7 +199,7 @@ export default function TradeView() {
 
       {/* Action buttons */}
       <button className="btn primary full trade-scan-btn" onClick={startCamera}>
-        <span>⬚</span> Scan
+        <span>📷</span> Scan
       </button>
 
       <button className="btn-text" onClick={() => fileInputRef.current?.click()}>
