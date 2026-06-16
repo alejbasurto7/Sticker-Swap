@@ -121,6 +121,15 @@ const expectedSwapsTotal = Object.values(full.swapQty).reduce((a, b) => a + b, 0
 assert(fullStats.swapsTotal === expectedSwapsTotal, `swapsTotal = sum of spares (${expectedSwapsTotal}, got ${fullStats.swapsTotal})`);
 assert(fullStats.missing === full.needs.length, `missing == needs (${full.needs.length}, got ${fullStats.missing})`);
 
+// --- Social-media preamble before the export ---
+// e.g. a Facebook post: "Does anyone trade in Alpharetta? Figuritas App - List ..."
+const WITH_PREAMBLE = 'Does anyone trade in Alpharetta? Figuritas App - List Usa Mex Can 26 I need FWC : 00, 2, 3 Swaps FWC : 1';
+console.log('Preamble comment before Figuritas App header');
+const wp = parseExport(WITH_PREAMBLE);
+assert(wp.needs.includes('FWC-trophy-00'), 'needs parsed after preamble stripped');
+assert(wp.swaps.includes('FWC-trophy-1'), 'swaps parsed after preamble stripped');
+assert(!wp.needs.some((id) => id.startsWith('Alpharetta')), 'preamble text not parsed as sticker');
+
 // --- Single-line export (WhatsApp / SMS strips newlines) ---
 // Reproduces the bug where "I need FWC : 00, 2, 3" on one line meant section
 // was never detected and every sticker was silently skipped.

@@ -39,10 +39,15 @@ function classifyHeader(line: string): Section {
  * ignored. Each content line maps its numbers to sticker ids via the album.
  */
 export function parseExport(text: string): ParsedList {
-  // Chat apps (WhatsApp, Telegram, SMS) often strip newlines when copying.
+  // Strip any preamble that precedes the export (social-media context, questions,
+  // etc. posted alongside the list). "Figuritas App" is the reliable start marker.
+  const appMarker = text.search(/figuritas\s+app\b/i);
+  const body = appMarker > 0 ? text.slice(appMarker) : text;
+
+  // Chat apps (WhatsApp, Facebook, SMS) often strip newlines when copying.
   // Re-insert line breaks before section keywords and before every "CODE :"
   // sticker-entry token so each line is classified independently.
-  const normalized = text
+  const normalized = body
     // Pass 1: newline before section-header keywords appearing mid-line.
     .replace(
       /[^\S\r\n]+(?=(?:I[ \t]+need|To[ \t]+swap|swaps?|necesito|me[ \t]+faltan|faltan|busco|cambio|repe|tengo|doy)(?:[ \t]|$))/gi,
