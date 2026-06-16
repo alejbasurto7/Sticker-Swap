@@ -27,13 +27,26 @@ export default function NewSwapDialog({ onClose, initialText }: Props) {
   const [give, setGive] = useState<Set<string>>(new Set());
   const [get, setGet] = useState<Set<string>>(new Set());
 
-  // Existing promises across open swaps (for conflict preview).
+  // Existing promises across open swaps (for conflict preview). Maps each
+  // already-committed sticker id to the tooltip StickerChips shows on its ⚠️.
   const existingGiving = useMemo(
-    () => new Set(swaps.filter((s) => s.status === 'open').flatMap((s) => s.giving)),
+    () =>
+      new Map(
+        swaps
+          .filter((s) => s.status === 'open')
+          .flatMap((s) => s.giving)
+          .map((id) => [id, 'Already promised in another swap'] as const),
+      ),
     [swaps],
   );
   const existingReceiving = useMemo(
-    () => new Set(swaps.filter((s) => s.status === 'open').flatMap((s) => s.receiving)),
+    () =>
+      new Map(
+        swaps
+          .filter((s) => s.status === 'open')
+          .flatMap((s) => s.receiving)
+          .map((id) => [id, 'Already being received in another swap'] as const),
+      ),
     [swaps],
   );
 
