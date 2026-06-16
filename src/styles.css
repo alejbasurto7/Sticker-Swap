@@ -209,6 +209,46 @@ button {
   color: #fff;
 }
 
+/* ---------- Search + sort bar ---------- */
+.search-sort-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.search-input {
+  flex: 1;
+  min-width: 0;
+  width: auto;
+  padding: 10px 12px;
+  font-size: 14px;
+  resize: none;
+  background: var(--bg-elev);
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--green);
+}
+
+.sort-select {
+  flex-shrink: 0;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  padding: 10px 10px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sort-select:focus {
+  outline: none;
+  border-color: var(--green);
+}
+
 /* ---------- Album page section ---------- */
 .page-section {
   background: var(--bg-elev);
