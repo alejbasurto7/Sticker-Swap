@@ -29,9 +29,12 @@ stickers, 992 total); switching preserves all your existing stickers.
 - Create multiple **named** swaps by pasting another collector's export.
 - The app computes what **you can give** (your duplicates they need) and **you can get**
   (their duplicates you're missing), and lets you pick what to promise.
-- **Conflict warnings** when a sticker is promised across more than one open swap.
+- **Reservation-aware matching**: a spare already promised in another open swap is never
+  offered again, and a sticker you're already due to receive won't be suggested elsewhere —
+  prevention, not just a warning. (A ⚠️ flag remains as a backstop for any legacy clashes.)
 - **Conclude** a swap to settle the exchange — your owned / missing / swap counts update
-  automatically.
+  automatically, and giving a sticker never strips a copy still reserved by another open
+  swap.
 
 ## Export / import format
 
@@ -57,9 +60,13 @@ npm run build     # type-check + production build (outputs dist/)
 npm run preview   # preview the production build
 ```
 
-`node scripts/generate-icons.mjs` regenerates the PWA icons.
-`node_modules/.bin/esbuild scripts/test-logic.ts --bundle --platform=node --format=esm --outfile=/tmp/t.mjs && node /tmp/t.mjs`
-runs the logic checks.
+```bash
+npx tsx scripts/test-logic.ts   # run the standalone logic checks
+node scripts/generate-icons.mjs # regenerate the PWA icons
+```
+
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for a full map of the codebase — data
+model, state store, swap/reservation logic, and the import/export format.
 
 ## Deployment
 
