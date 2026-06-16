@@ -78,7 +78,7 @@ export default function SwapDetail({ swap, onClose }: Props) {
           </div>
         )}
 
-        <div className="section-title">You give ({swap.giving.length})</div>
+        <div className="section-title">You give ({giving.size})</div>
         <StickerChips
           ids={swap.giving}
           selected={giving}
@@ -87,7 +87,7 @@ export default function SwapDetail({ swap, onClose }: Props) {
           readOnly={!isOpen}
         />
 
-        <div className="section-title">You get ({swap.receiving.length})</div>
+        <div className="section-title">You get ({receiving.size})</div>
         <StickerChips
           ids={swap.receiving}
           selected={receiving}
