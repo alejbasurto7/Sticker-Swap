@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Counts, Edition, Swap } from '../types';
 import { applyEdition, DEFAULT_EDITION } from '../data/sampleAlbum';
+import { computeReservations, quantityAfterGive } from '../utils/swap';
 
 type ImportMode = 'replace' | 'merge';
 
@@ -100,8 +101,13 @@ export const useCollection = create<CollectionState>()(
 
       closeSwap: (id, settled) =>
         set((s) => {
+          // Copies still reserved by OTHER open swaps must survive this settlement, so a
+          // give here can never strip a spare already promised to someone else.
+          const others = computeReservations(s.swaps, id);
           const counts = { ...s.counts };
-          for (const gid of settled.givenIds) counts[gid] = clampCount((counts[gid] ?? 0) - 1);
+          for (const gid of settled.givenIds) {
+            counts[gid] = quantityAfterGive(counts[gid] ?? 0, others.committedGive.get(gid) ?? 0);
+          }
           for (const rid of settled.receivedIds) counts[rid] = clampCount((counts[rid] ?? 0) + 1);
           const swaps = s.swaps.map((sw) =>
             sw.id === id

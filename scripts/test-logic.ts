@@ -1,7 +1,12 @@
 import { album, applyEdition } from '../src/data/sampleAlbum';
 import { parseExport, parsedToCounts } from '../src/utils/import';
 import { computeStats } from '../src/utils/stats';
-import { computeCandidates, computeConflicts } from '../src/utils/swap';
+import {
+  computeCandidates,
+  computeConflicts,
+  computeReservations,
+  quantityAfterGive,
+} from '../src/utils/swap';
 import type { Swap } from '../src/types';
 
 let failures = 0;
@@ -143,6 +148,50 @@ assert(sl.swaps.includes('FWC-trophy-1'), 'FWC 1 swap parsed from single-line');
 assert(sl.swaps.includes('FWC-scroll-11') && sl.swaps.includes('FWC-scroll-18'), 'FWC scroll swaps parsed');
 assert(sl.swaps.includes('MEX-12') && sl.swaps.includes('MEX-20'), 'MEX swaps parsed from single-line');
 assert(sl.needs.length > 0 && sl.swaps.length > 0, 'both sections non-empty');
+
+// --- Reservation rollups across open swaps ---
+console.log('Reservation rollups (committed give/get)');
+const resSwaps: Swap[] = [
+  { id: 'a', name: 'A', createdAt: 1, status: 'open', theirNeeds: [], theirSwaps: [], giving: ['BRA-3'], receiving: ['ARG-10'] },
+  { id: 'b', name: 'B', createdAt: 2, status: 'open', theirNeeds: [], theirSwaps: [], giving: ['BRA-3', 'MEX-5'], receiving: [] },
+  { id: 'c', name: 'C', createdAt: 3, status: 'closed', theirNeeds: [], theirSwaps: [], giving: ['BRA-3'], receiving: ['ARG-10'] },
+];
+const res = computeReservations(resSwaps);
+assert(res.committedGive.get('BRA-3') === 2, 'BRA-3 committed as give in 2 OPEN swaps (closed ignored)');
+assert(res.committedGive.get('MEX-5') === 1, 'MEX-5 committed once');
+assert(res.committedGet.has('ARG-10'), 'ARG-10 committed as get (open swap a)');
+const resExcl = computeReservations(resSwaps, 'a');
+assert(resExcl.committedGive.get('BRA-3') === 1, 'excluding swap a leaves BRA-3 give count 1');
+assert(!resExcl.committedGet.has('ARG-10'), 'excluding swap a releases the ARG-10 get');
+
+// --- Reservation-aware candidates (the safety core) ---
+console.log('Reservation-aware candidates');
+const partyNeedsBra: ParsedList = { needs: ['BRA-3'], swaps: ['ARG-10'], swapQty: {}, unmatched: [] };
+// I hold exactly one spare of BRA-3 (count 2) and am missing ARG-10.
+const myC: Record<string, number> = { 'BRA-3': 2, 'ARG-10': 0 };
+// That one spare is already promised to another open swap -> not offerable again.
+const fullyReserved = computeReservations([
+  { id: 'x', name: 'X', createdAt: 1, status: 'open', theirNeeds: [], theirSwaps: [], giving: ['BRA-3'], receiving: ['ARG-10'] },
+]);
+const candR = computeCandidates(myC, partyNeedsBra, fullyReserved);
+assert(!candR.youGive.includes('BRA-3'), 'fully-reserved spare is NOT offered to a second swap');
+assert(!candR.youGet.includes('ARG-10'), 'a sticker already being received is NOT offered again');
+// With two spares (count 3) and one reserved, one copy is still offerable.
+const myC2: Record<string, number> = { 'BRA-3': 3, 'ARG-10': 0 };
+const candR2 = computeCandidates(myC2, partyNeedsBra, fullyReserved);
+assert(candR2.youGive.includes('BRA-3'), 'partially-reserved spare is still offerable');
+// Backward compatible: no reservations -> original behaviour.
+const candPlain = computeCandidates(myC, partyNeedsBra);
+assert(candPlain.youGive.includes('BRA-3') && candPlain.youGet.includes('ARG-10'), 'no reservations behaves as before');
+
+// --- Give floor at settlement (never empties owned, protects others' reservations) ---
+console.log('quantityAfterGive floor');
+assert(quantityAfterGive(2, 0) === 1, 'give a spare: 2 -> 1');
+assert(quantityAfterGive(1, 0) === 0, 'give last copy when nothing reserved: 1 -> 0');
+assert(quantityAfterGive(0, 0) === 0, 'nothing to give: 0 -> 0 (no phantom)');
+assert(quantityAfterGive(3, 1) === 2, 'one reserved by others: 3 -> 2');
+assert(quantityAfterGive(2, 1) === 2, 'protect 1 owned + 1 reserved: cannot drop below 2');
+assert(quantityAfterGive(1, 1) === 1, 'inconsistent reserve never creates a phantom copy');
 
 console.log(failures === 0 ? '\nALL PASS' : `\n${failures} FAILURES`);
 process.exit(failures === 0 ? 0 : 1);

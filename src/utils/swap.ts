@@ -11,23 +11,74 @@ export interface SwapCandidates {
   youGet: string[];
 }
 
-export function computeCandidates(counts: Counts, other: ParsedList): SwapCandidates {
+/**
+ * Reservation rollups across all OPEN swaps — the live picture of what is already
+ * promised. Mirrors the design spec's `committedGive` / `committedGet`.
+ * - committedGive: code -> how many copies are earmarked to give (sum over open swaps).
+ * - committedGet:  codes the user is already lined up to receive (any open swap).
+ * Pass `excludeSwapId` when re-diffing an existing swap so its own promises don't
+ * count against itself.
+ */
+export interface Reservations {
+  committedGive: Map<string, number>;
+  committedGet: Set<string>;
+}
+
+export function computeReservations(swaps: Swap[], excludeSwapId?: string): Reservations {
+  const committedGive = new Map<string, number>();
+  const committedGet = new Set<string>();
+
+  for (const sw of swaps) {
+    if (sw.status !== 'open' || sw.id === excludeSwapId) continue;
+    for (const id of sw.giving) committedGive.set(id, (committedGive.get(id) ?? 0) + 1);
+    for (const id of sw.receiving) committedGet.add(id);
+  }
+
+  return { committedGive, committedGet };
+}
+
+/**
+ * Reservation-aware two-way overlap. Spares already promised in other open swaps are
+ * excluded from `youGive`, and stickers already lined up to receive are excluded from
+ * `youGet` — so a spare is never double-promised and you never chase a sticker you are
+ * already getting. With no `reservations` it falls back to the plain overlap.
+ */
+export function computeCandidates(
+  counts: Counts,
+  other: ParsedList,
+  reservations?: Reservations,
+): SwapCandidates {
   const otherNeeds = new Set(other.needs);
   const otherSwaps = new Set(other.swaps);
+  const committedGive = reservations?.committedGive;
+  const committedGet = reservations?.committedGet;
 
   const youGive: string[] = [];
   const youGet: string[] = [];
 
-  // User's duplicates (count >= 2) that the other collector needs.
-  for (const [id, c] of Object.entries(counts)) {
-    if (c >= 2 && otherNeeds.has(id)) youGive.push(id);
+  // My spares they need, minus copies already promised elsewhere (offerable >= 1).
+  for (const id of otherNeeds) {
+    const spare = Math.max((counts[id] ?? 0) - 1, 0);
+    const offerable = spare - (committedGive?.get(id) ?? 0);
+    if (offerable >= 1) youGive.push(id);
   }
-  // Other collector's duplicates that the user is missing (count 0).
+  // Their spares I'm missing, unless I'm already receiving that sticker.
   for (const id of otherSwaps) {
-    if ((counts[id] ?? 0) === 0) youGet.push(id);
+    if ((counts[id] ?? 0) === 0 && !committedGet?.has(id)) youGet.push(id);
   }
 
   return { youGive, youGet };
+}
+
+/**
+ * Quantity after physically giving one copy at settlement. Never drops below 1 owned
+ * plus the copies still reserved by OTHER open swaps (the spec's `1 + committed` floor),
+ * and never invents a copy the user doesn't hold.
+ */
+export function quantityAfterGive(current: number, committedByOthers: number): number {
+  if (current <= 0) return 0;
+  const floor = committedByOthers > 0 ? committedByOthers + 1 : 0;
+  return Math.min(current, Math.max(current - 1, floor));
 }
 
 /**

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useCollection } from '../store/collectionStore';
 import { parseExport } from '../utils/import';
-import { computeCandidates } from '../utils/swap';
+import { computeCandidates, computeReservations } from '../utils/swap';
 import StickerChips from './StickerChips';
 
 interface Props {
@@ -27,25 +27,19 @@ export default function NewSwapDialog({ onClose, initialText }: Props) {
   const [give, setGive] = useState<Set<string>>(new Set());
   const [get, setGet] = useState<Set<string>>(new Set());
 
-  // Existing promises across open swaps (for conflict preview).
-  const existingGiving = useMemo(
-    () => new Set(swaps.filter((s) => s.status === 'open').flatMap((s) => s.giving)),
-    [swaps],
-  );
-  const existingReceiving = useMemo(
-    () => new Set(swaps.filter((s) => s.status === 'open').flatMap((s) => s.receiving)),
-    [swaps],
-  );
+  // Live reservations across all open swaps, so spares already promised elsewhere are
+  // never offered here and a sticker already being received is never chased again.
+  const reservations = useMemo(() => computeReservations(swaps), [swaps]);
 
   const candidates = useMemo(
-    () => (parsed ? computeCandidates(counts, parsed) : null),
-    [parsed, counts],
+    () => (parsed ? computeCandidates(counts, parsed, reservations) : null),
+    [parsed, counts, reservations],
   );
 
   const findMatches = () => {
     const p = parseExport(text);
     setParsed(p);
-    const c = computeCandidates(counts, p);
+    const c = computeCandidates(counts, p, reservations);
     setGive(new Set(c.youGive));
     setGet(new Set(c.youGet));
   };
@@ -104,7 +98,6 @@ export default function NewSwapDialog({ onClose, initialText }: Props) {
             <StickerChips
               ids={candidates.youGive}
               selected={give}
-              conflicts={existingGiving}
               onToggle={(id) => toggle(give, setGive, id)}
             />
 
@@ -114,7 +107,6 @@ export default function NewSwapDialog({ onClose, initialText }: Props) {
             <StickerChips
               ids={candidates.youGet}
               selected={get}
-              conflicts={existingReceiving}
               onToggle={(id) => toggle(get, setGet, id)}
             />
 
