@@ -12,9 +12,10 @@ interface Props {
 
 export default function SwapDetail({ swap, onClose }: Props) {
   const swaps = useCollection((s) => s.swaps);
-  const updateSwap = useCollection((s) => s.updateSwap);
   const deleteSwap = useCollection((s) => s.deleteSwap);
   const [closing, setClosing] = useState(false);
+  const [deselectedGiving, setDeselectedGiving] = useState(new Set<string>());
+  const [deselectedReceiving, setDeselectedReceiving] = useState(new Set<string>());
 
   const isOpen = swap.status === 'open';
 
@@ -27,18 +28,24 @@ export default function SwapDetail({ swap, onClose }: Props) {
   const recvConflicts = new Set(swap.receiving.filter((id) => conflicts.receiving.has(id)));
   const conflictCount = giveConflicts.size + recvConflicts.size;
 
-  const giving = new Set(swap.giving);
-  const receiving = new Set(swap.receiving);
+  const giving = new Set(swap.giving.filter((id) => !deselectedGiving.has(id)));
+  const receiving = new Set(swap.receiving.filter((id) => !deselectedReceiving.has(id)));
 
   const toggleGiving = (id: string) => {
-    const next = new Set(giving);
-    if (next.has(id)) next.delete(id);
-    updateSwap(swap.id, { giving: [...next] });
+    setDeselectedGiving((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
   };
   const toggleReceiving = (id: string) => {
-    const next = new Set(receiving);
-    if (next.has(id)) next.delete(id);
-    updateSwap(swap.id, { receiving: [...next] });
+    setDeselectedReceiving((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
   };
 
   const remove = () => {
@@ -60,7 +67,7 @@ export default function SwapDetail({ swap, onClose }: Props) {
         </div>
         <p className="modal-sub">
           {isOpen
-            ? 'Tap a sticker to drop it from this swap.'
+            ? 'Tap a sticker to unselect it. Tap again to add it back.'
             : 'This swap is concluded. Counts were updated when it closed.'}
         </p>
 
@@ -93,14 +100,12 @@ export default function SwapDetail({ swap, onClose }: Props) {
           <button className="btn danger" onClick={remove}>
             Delete
           </button>
+          <button className="btn" onClick={onClose}>
+            Close
+          </button>
           {isOpen && (
             <button className="btn primary full" onClick={() => setClosing(true)}>
               ✓ Conclude swap
-            </button>
-          )}
-          {!isOpen && (
-            <button className="btn full" onClick={onClose}>
-              Close
             </button>
           )}
         </div>
