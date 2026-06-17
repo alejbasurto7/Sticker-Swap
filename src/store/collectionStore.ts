@@ -3,7 +3,6 @@ import { persist } from 'zustand/middleware';
 import type { Counts, Edition, Swap } from '../types';
 import { album, applyEdition, DEFAULT_EDITION, DEFAULT_TRACK_CC } from '../data/sampleAlbum';
 import { computeReservations, quantityAfterGive } from '../utils/swap';
-import { dateKey } from '../utils/stats';
 
 type ImportMode = 'replace' | 'merge';
 
@@ -13,10 +12,14 @@ interface CollectionState {
   edition: Edition;
   trackCC: boolean;
   albumName: string;
-  /** Local date keys (YYYY-MM-DD) on which a sticker was added. Drives the streak. */
-  collectDays: string[];
+  /** Timestamp of the very first sticker added (for speed-run style achievements). */
+  firstStickerAt?: number;
+  /** Local YYYY-MM-DD days on which the collection grew (streak + days collecting). */
+  activityDays: string[];
   /** Date the album first reached 100% unique, which freezes "days collecting". */
   completedOn: string | null;
+  /** Sticky ledger: achievement key -> timestamp first earned. */
+  unlockedAchievements: Record<string, number>;
   setEdition: (edition: Edition) => void;
   setTrackCC: (trackCC: boolean) => void;
   setAlbumName: (name: string) => void;
@@ -40,6 +43,9 @@ interface CollectionState {
   closeSwap: (id: string, settled: { givenIds: string[]; receivedIds: string[] }) => void;
   deleteSwap: (id: string) => void;
   undoLastTrade: () => void;
+
+  // Achievements
+  markUnlocked: (keys: string[]) => void;
 }
 
 const clampCount = (n: number) => (n < 0 ? 0 : n);
@@ -48,33 +54,36 @@ function newId(): string {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-const sumCounts = (counts: Counts) => Object.values(counts).reduce((a, n) => a + n, 0);
-
 const ownedUnique = (counts: Counts) =>
   album.stickers.reduce((acc, s) => acc + ((counts[s.id] ?? 0) >= 1 ? 1 : 0), 0);
 
+/** Local calendar day as YYYY-MM-DD, used to group collecting activity. */
+function todayKey(ts = Date.now()): string {
+  const d = new Date(ts);
+  const m = `${d.getMonth() + 1}`.padStart(2, '0');
+  const day = `${d.getDate()}`.padStart(2, '0');
+  return `${d.getFullYear()}-${m}-${day}`;
+}
+
 /**
- * Records the collection-history side effects of a count change: a streak day
- * whenever the total number of stickers grew, and the completion date the first
- * time every unique sticker is owned. Returns the patch to merge into state.
+ * Stamp the first-sticker time, log today as an active collecting day, and—once
+ * every unique sticker is owned—freeze the album completion date. Pass the
+ * resulting counts so completion can be detected.
  */
-function trackHistory(
-  prev: Pick<CollectionState, 'counts' | 'collectDays' | 'completedOn'>,
-  nextCounts: Counts,
-): Pick<CollectionState, 'collectDays' | 'completedOn'> {
-  let collectDays = prev.collectDays;
-  let completedOn = prev.completedOn;
-  const today = dateKey(Date.now());
-
-  if (sumCounts(nextCounts) > sumCounts(prev.counts) && !collectDays.includes(today)) {
-    collectDays = [...collectDays, today].sort();
-  }
-
-  if (!completedOn && album.stickers.length > 0 && ownedUnique(nextCounts) === album.stickers.length) {
+function withActivity(
+  s: CollectionState,
+  nextCounts?: Counts,
+): Pick<CollectionState, 'firstStickerAt' | 'activityDays' | 'completedOn'> {
+  const today = todayKey();
+  let completedOn = s.completedOn;
+  if (!completedOn && nextCounts && album.stickers.length > 0 && ownedUnique(nextCounts) === album.stickers.length) {
     completedOn = today;
   }
-
-  return { collectDays, completedOn };
+  return {
+    firstStickerAt: s.firstStickerAt ?? Date.now(),
+    activityDays: s.activityDays.includes(today) ? s.activityDays : [...s.activityDays, today].sort(),
+    completedOn,
+  };
 }
 
 export const useCollection = create<CollectionState>()(
@@ -85,8 +94,9 @@ export const useCollection = create<CollectionState>()(
       edition: DEFAULT_EDITION,
       trackCC: DEFAULT_TRACK_CC,
       albumName: 'Usa Mex Can 26',
-      collectDays: [],
+      activityDays: [],
       completedOn: null,
+      unlockedAchievements: {},
 
       setEdition: (edition) =>
         set((s) => {
@@ -105,7 +115,7 @@ export const useCollection = create<CollectionState>()(
       addOne: (id) =>
         set((s) => {
           const counts = { ...s.counts, [id]: clampCount((s.counts[id] ?? 0) + 1) };
-          return { counts, ...trackHistory(s, counts) };
+          return { counts, ...withActivity(s, counts) };
         }),
 
       removeOne: (id) =>
@@ -113,12 +123,15 @@ export const useCollection = create<CollectionState>()(
 
       setCount: (id, n) =>
         set((s) => {
-          const counts = { ...s.counts, [id]: clampCount(n) };
-          return { counts, ...trackHistory(s, counts) };
+          const next = clampCount(n);
+          const increased = next > (s.counts[id] ?? 0);
+          const counts = { ...s.counts, [id]: next };
+          return { counts, ...(increased ? withActivity(s, counts) : {}) };
         }),
 
       importCounts: (map, mode) =>
         set((s) => {
+          const added = Object.values(map).some((n) => n > 0);
           const counts =
             mode === 'replace'
               ? { ...map }
@@ -127,10 +140,12 @@ export const useCollection = create<CollectionState>()(
                   for (const [id, n] of Object.entries(map)) merged[id] = clampCount(n);
                   return merged;
                 })();
-          return { counts, ...trackHistory(s, counts) };
+          return { counts, ...(added ? withActivity(s, counts) : {}) };
         }),
 
-      reset: () => set({ counts: {}, collectDays: [], completedOn: null }),
+      // Clears the collection and its live time counters for a fresh start; earned
+      // badges stay permanent via the separate unlockedAchievements ledger.
+      reset: () => set({ counts: {}, activityDays: [], completedOn: null, firstStickerAt: undefined }),
 
       createSwap: (input) => {
         const id = newId();
@@ -183,7 +198,8 @@ export const useCollection = create<CollectionState>()(
                 }
               : sw,
           );
-          return { counts, swaps, ...trackHistory(s, counts) };
+          // Receiving new stickers counts as a collecting day.
+          return { counts, swaps, ...(settled.receivedIds.length ? withActivity(s, counts) : {}) };
         }),
 
       deleteSwap: (id) => set((s) => ({ swaps: s.swaps.filter((sw) => sw.id !== id) })),
@@ -198,6 +214,20 @@ export const useCollection = create<CollectionState>()(
           for (const id of last.giving) counts[id] = clampCount((counts[id] ?? 0) + 1);
           for (const id of last.receiving) counts[id] = clampCount((counts[id] ?? 0) - 1);
           return { counts, swaps: s.swaps.filter((sw) => sw.id !== last.id) };
+        }),
+
+      markUnlocked: (keys) =>
+        set((s) => {
+          const now = Date.now();
+          let changed = false;
+          const unlockedAchievements = { ...s.unlockedAchievements };
+          for (const k of keys) {
+            if (unlockedAchievements[k] == null) {
+              unlockedAchievements[k] = now;
+              changed = true;
+            }
+          }
+          return changed ? { unlockedAchievements } : s;
         }),
     }),
     {

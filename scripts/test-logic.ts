@@ -241,10 +241,10 @@ assert(daysCollecting('2026-06-10', '2026-06-17') === 8, 'June 10 to 17 inclusiv
 // completedOn freezes the end date: a completion date before "today" stops the count.
 const completedStats = computeStats(
   Object.fromEntries(album.stickers.map((s) => [s.id, 1])),
-  { collectDays: ['2026-06-01', '2026-06-02'], completedOn: '2026-06-05' },
+  { activityDays: ['2026-06-01', '2026-06-02'], completedOn: '2026-06-05' },
 );
 assert(completedStats.daysCollecting === 5, 'frozen at completion: Jun 1 -> Jun 5 = 5 days');
-assert(completedStats.currentStreak === 2, 'streak read from collectDays');
+assert(completedStats.currentStreak === 2, 'streak read from activityDays');
 
 console.log(failures === 0 ? '\nALL PASS' : `\n${failures} FAILURES`);
 process.exit(failures === 0 ? 0 : 1);
