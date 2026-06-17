@@ -14,8 +14,8 @@ export default defineConfig(({ command }) => ({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
       manifest: {
-        name: 'Figuritas — Sticker Collector',
-        short_name: 'Figuritas',
+        name: 'Sticker Collector',
+        short_name: 'Sticker Collector',
         description: 'Track your sticker album, view stats, and organize swaps.',
         theme_color: '#0b8a4b',
         background_color: '#0f1115',

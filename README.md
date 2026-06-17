@@ -1,6 +1,6 @@
-# Figuritas — Sticker Collector PWA
+# Sticker Collector PWA
 
-A faithful PWA recreation of the **Figuritas: Sticker Collector** app, focused on the
+A faithful PWA recreation of the **Sticker Collector** app, focused on the
 **Album**, **Stats**, and **Swaps** experiences. Built with React + Vite + TypeScript,
 fully offline-capable, and installable on desktop and mobile. All data lives in your
 browser — no backend.
