@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useCollection } from '../store/collectionStore';
 import { CC_EMOJI, EDITION_INFO } from '../data/sampleAlbum';
+import { ALBUM_TYPE } from '../config';
 import type { Edition } from '../types';
 
 interface Props {
@@ -20,8 +21,10 @@ export default function EditionDialog({ onClose }: Props) {
   const activeAlbumId = useCollection((s) => s.activeAlbumId);
   const createAlbum = useCollection((s) => s.createAlbum);
   const switchAlbum = useCollection((s) => s.switchAlbum);
+  const deleteAlbum = useCollection((s) => s.deleteAlbum);
 
   const [draft, setDraft] = useState(albumName);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   // The album name changes out from under us when the user creates or switches
   // albums, so keep the editable draft mirrored to the active album's name.
@@ -38,6 +41,12 @@ export default function EditionDialog({ onClose }: Props) {
       setAlbumName(draft);
       e.currentTarget.blur();
     }
+  }
+
+  function handleConfirmDelete() {
+    deleteAlbum(activeAlbumId);
+    setConfirmingDelete(false);
+    onClose();
   }
 
   return (
@@ -164,12 +173,52 @@ export default function EditionDialog({ onClose }: Props) {
           );
         })}
 
+        <h3 style={{ margin: '1.25rem 0 0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>Danger zone</h3>
+        <button
+          type="button"
+          className="btn danger full"
+          onClick={() => setConfirmingDelete(true)}
+        >
+          🗑️ Delete album
+        </button>
+
         <div className="btn-row">
           <button className="btn full" onClick={onClose}>
             Close
           </button>
         </div>
       </div>
+
+      {confirmingDelete && (
+        <div className="modal-backdrop" onClick={() => setConfirmingDelete(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <h2>Delete album?</h2>
+            <p className="modal-sub">
+              This will permanently delete the album below, along with its stickers and
+              swaps. This action cannot be undone.
+            </p>
+            <div
+              style={{
+                border: '1.5px solid var(--border)',
+                borderRadius: '8px',
+                padding: '0.75rem',
+                marginBottom: '0.5rem',
+              }}
+            >
+              <div style={{ fontWeight: 700, fontSize: '1rem' }}>{albumName}</div>
+              <div style={{ color: 'var(--text-dim)', fontSize: '0.85rem' }}>{ALBUM_TYPE}</div>
+            </div>
+            <div className="btn-row">
+              <button className="btn full" onClick={() => setConfirmingDelete(false)}>
+                Cancel
+              </button>
+              <button className="btn danger full" onClick={handleConfirmDelete}>
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
