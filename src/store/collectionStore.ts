@@ -62,6 +62,7 @@ interface CollectionState {
   // Album management
   createAlbum: () => void;
   switchAlbum: (id: string) => void;
+  deleteAlbum: (id: string) => void;
 
   // Collection actions
   addOne: (id: string) => void;
@@ -230,6 +231,36 @@ export const useCollection = create<CollectionState>()(
           );
           applyEdition(target.edition, target.trackCC);
           return { albums, activeAlbumId: id, ...loadSnapshot(target) };
+        }),
+
+      deleteAlbum: (id) =>
+        set((s) => {
+          const remaining = s.albums.filter((a) => a.id !== id);
+          // Never leave the app album-less: rebuild a fresh default if this was the last one.
+          if (remaining.length === 0) {
+            const fresh: AlbumSnapshot = {
+              id: newId(),
+              albumName: DEFAULT_ALBUM_NAME,
+              counts: {},
+              swaps: [],
+              edition: DEFAULT_EDITION,
+              trackCC: DEFAULT_TRACK_CC,
+              firstStickerAt: undefined,
+              activityDays: [],
+              completedOn: null,
+              unlockedAchievements: {},
+            };
+            applyEdition(fresh.edition, fresh.trackCC);
+            return { albums: [fresh], activeAlbumId: fresh.id, ...loadSnapshot(fresh) };
+          }
+          // Deleting the active album means promoting another one to live; deleting a
+          // parked album just drops it and leaves the active fields untouched.
+          if (id === s.activeAlbumId) {
+            const target = remaining[0];
+            applyEdition(target.edition, target.trackCC);
+            return { albums: remaining, activeAlbumId: target.id, ...loadSnapshot(target) };
+          }
+          return { albums: remaining };
         }),
 
       setEdition: (edition) =>
