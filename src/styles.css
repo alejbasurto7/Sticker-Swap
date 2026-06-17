@@ -169,12 +169,15 @@ button {
   color: var(--green-bright);
 }
 .tabbar .tab-icon {
+  position: relative;
   font-size: 20px;
   line-height: 1;
 }
 .tab-badge {
   position: absolute;
-  transform: translate(14px, -10px);
+  top: 0;
+  right: 0;
+  transform: translate(45%, -45%);
   background: var(--red);
   color: #fff;
   font-size: 10px;
