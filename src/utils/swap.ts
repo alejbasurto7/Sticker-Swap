@@ -99,6 +99,33 @@ export function quantityAfterGive(current: number, committedByOthers: number): n
 }
 
 /**
+ * Apply a settlement to the counts, returning the new counts and the net change
+ * per touched sticker. Gives use quantityAfterGive (so a give reserved by other
+ * open swaps may not actually drop, in which case it records no delta); receives
+ * always add one. The delta is what rollbackSwap reverses.
+ */
+export function settleSwapCounts(
+  counts: Counts,
+  settled: { givenIds: string[]; receivedIds: string[] },
+  committedGive: Map<string, number>,
+): { counts: Counts; delta: Record<string, number> } {
+  const next: Counts = { ...counts };
+  const delta: Record<string, number> = {};
+  for (const gid of settled.givenIds) {
+    const before = next[gid] ?? 0;
+    const after = quantityAfterGive(before, committedGive.get(gid) ?? 0);
+    next[gid] = after;
+    if (after !== before) delta[gid] = (delta[gid] ?? 0) + (after - before);
+  }
+  for (const rid of settled.receivedIds) {
+    const before = next[rid] ?? 0;
+    next[rid] = before + 1;
+    delta[rid] = (delta[rid] ?? 0) + 1;
+  }
+  return { counts: next, delta };
+}
+
+/**
  * Cross-swap conflict sets across all OPEN swaps.
  * - giving: sticker promised to give in more open swaps than the user has spares for.
  * - receiving: missing sticker (count=0) expected from 2+ open swaps (you only need one).

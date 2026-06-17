@@ -58,4 +58,11 @@ export interface Swap {
    */
   deselectedGiving?: string[];
   deselectedReceiving?: string[];
+  /**
+   * Net count change closeSwap applied at settlement, per sticker id
+   * (given -1, received +1; floored gives are omitted). Used by
+   * rollbackSwap to reverse the close exactly. Absent on swaps closed
+   * before this field existed.
+   */
+  settledDelta?: Record<string, number>;
 }
