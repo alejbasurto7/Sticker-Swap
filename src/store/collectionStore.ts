@@ -5,6 +5,7 @@ import { album, applyEdition, DEFAULT_EDITION, DEFAULT_TRACK_CC } from '../data/
 import { computeReservations, quantityAfterGive } from '../utils/swap';
 
 type ImportMode = 'replace' | 'merge';
+export type Theme = 'dark' | 'light';
 
 /** Default name given to a freshly created album (deduplicated when it collides). */
 const NEW_ALBUM_NAME = 'New Album';
@@ -54,11 +55,16 @@ interface CollectionState {
    */
   importSeq: number;
 
+  /** UI colour scheme. Global preference, not tied to any album. */
+  theme: Theme;
+
   /** Every album the user has, including a (possibly stale) snapshot of the active one. */
   albums: AlbumSnapshot[];
   /** Id of the album whose data is currently mirrored at the top level. */
   activeAlbumId: string;
 
+  setTheme: (theme: Theme) => void;
+  toggleTheme: () => void;
   setEdition: (edition: Edition) => void;
   setTrackCC: (trackCC: boolean) => void;
   setAlbumName: (name: string) => void;
@@ -200,6 +206,7 @@ export const useCollection = create<CollectionState>()(
       completedOn: null,
       unlockedAchievements: {},
       importSeq: 0,
+      theme: 'dark',
       activeAlbumId: DEFAULT_ALBUM_ID,
       albums: [
         {
@@ -283,6 +290,10 @@ export const useCollection = create<CollectionState>()(
           }
           return { albums: remaining };
         }),
+
+      setTheme: (theme) => set({ theme }),
+
+      toggleTheme: () => set((s) => ({ theme: s.theme === 'dark' ? 'light' : 'dark' })),
 
       setEdition: (edition) =>
         set((s) => {

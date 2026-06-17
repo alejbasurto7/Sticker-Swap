@@ -880,6 +880,14 @@ button {
 .switch.on .knob {
   transform: translateX(20px);
 }
+/* Theme switch carries a sun/moon emoji inside the sliding knob. */
+.theme-switch .knob {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  line-height: 1;
+}
 textarea,
 input[type='text'] {
   width: 100%;
@@ -1098,4 +1106,61 @@ textarea {
   margin-top: 18px;
   font-size: 11px;
   color: var(--text-dim);
+}
+
+/* ---------- Light theme ----------
+   Activated by data-theme="light" on <html> (set from the store in App.tsx).
+   Overrides the palette tokens, then patches the few surfaces whose colours are
+   hard-coded (header, tab bar, celebratory banner, share card) so every text
+   keeps a readable contrast in light mode. */
+:root[data-theme='light'] {
+  --bg: #f4f6fa;
+  --bg-elev: #ffffff;
+  --bg-elev-2: #e7ebf2;
+  --border: #d3dae5;
+  --text: #131720;
+  --text-dim: #5b6675;
+  --green: #0b8a4b;
+  --green-bright: #0a7d44;
+  --gold: #f5c542;
+  --red: #c8412c;
+  --blue: #2563eb;
+}
+
+/* Colourful host-nation header keeps light text over its dark/blue top band. */
+:root[data-theme='light'] .app-header h1 {
+  color: #ffffff;
+}
+:root[data-theme='light'] .app-header .subtitle {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* Frosted tab bar inverts to a light translucent surface. */
+:root[data-theme='light'] .tabbar {
+  background: rgba(255, 255, 255, 0.92);
+  border-top-color: var(--border);
+}
+
+/* The achievement banner stays a dark celebration card, so pin its text light. */
+:root[data-theme='light'] .achievement-banner .ab-title {
+  color: #f2f4f8;
+}
+:root[data-theme='light'] .achievement-banner .ab-desc,
+:root[data-theme='light'] .achievement-banner .ab-more {
+  color: #c7cfdb;
+}
+
+/* The share card is exported as a fixed dark image, so keep its text light. */
+:root[data-theme='light'] .share-card {
+  color: #f2f4f8;
+}
+:root[data-theme='light'] .share-card .sc-album,
+:root[data-theme='light'] .share-card .sc-stat .l,
+:root[data-theme='light'] .share-card .sc-foot {
+  color: #aeb7c5;
+}
+
+/* Conflict warning needs a darker red on its pale red background. */
+:root[data-theme='light'] .conflict-banner {
+  color: #a8341f;
 }

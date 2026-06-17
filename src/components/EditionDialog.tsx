@@ -15,6 +15,8 @@ export default function EditionDialog({ onClose }: Props) {
   const setEdition = useCollection((s) => s.setEdition);
   const trackCC = useCollection((s) => s.trackCC);
   const setTrackCC = useCollection((s) => s.setTrackCC);
+  const theme = useCollection((s) => s.theme);
+  const toggleTheme = useCollection((s) => s.toggleTheme);
   const albumName = useCollection((s) => s.albumName);
   const setAlbumName = useCollection((s) => s.setAlbumName);
   const albums = useCollection((s) => s.albums);
@@ -57,6 +59,22 @@ export default function EditionDialog({ onClose }: Props) {
         <button type="button" className="btn full" onClick={() => createAlbum()} style={{ marginBottom: '1rem' }}>
           ➕ New Album
         </button>
+
+        <div style={{ marginBottom: '1rem' }}>
+          <button
+            type="button"
+            className="setting-toggle"
+            role="switch"
+            aria-checked={theme === 'light'}
+            aria-label="Toggle light mode"
+            onClick={toggleTheme}
+          >
+            <span className="setting-label">{theme === 'light' ? '☀️ Light mode' : '🌙 Dark mode'}</span>
+            <span className={`switch theme-switch${theme === 'light' ? ' on' : ''}`} aria-hidden="true">
+              <span className="knob">{theme === 'light' ? '☀️' : '🌙'}</span>
+            </span>
+          </button>
+        </div>
 
         {albums.length > 1 && (
           <div style={{ marginBottom: '1rem' }}>
