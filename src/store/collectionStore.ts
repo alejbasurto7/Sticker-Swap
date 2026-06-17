@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Counts, Edition, Swap } from '../types';
 import { album, applyEdition, DEFAULT_EDITION, DEFAULT_TRACK_CC } from '../data/sampleAlbum';
-import { computeReservations, quantityAfterGive } from '../utils/swap';
+import { computeReservations, settleSwapCounts, reverseSettlement } from '../utils/swap';
 
 type ImportMode = 'replace' | 'merge';
 export type Theme = 'dark' | 'light';
@@ -102,6 +102,7 @@ interface CollectionState {
     },
   ) => void;
   closeSwap: (id: string, settled: { givenIds: string[]; receivedIds: string[] }) => void;
+  rollbackSwap: (id: string) => void;
   deleteSwap: (id: string) => void;
   undoLastTrade: () => void;
 
@@ -403,11 +404,7 @@ export const useCollection = create<CollectionState>()(
           // Copies still reserved by OTHER open swaps must survive this settlement, so a
           // give here can never strip a spare already promised to someone else.
           const others = computeReservations(s.swaps, id);
-          const counts = { ...s.counts };
-          for (const gid of settled.givenIds) {
-            counts[gid] = quantityAfterGive(counts[gid] ?? 0, others.committedGive.get(gid) ?? 0);
-          }
-          for (const rid of settled.receivedIds) counts[rid] = clampCount((counts[rid] ?? 0) + 1);
+          const { counts, delta } = settleSwapCounts(s.counts, settled, others.committedGive);
           const swaps = s.swaps.map((sw) =>
             sw.id === id
               ? {
@@ -416,6 +413,8 @@ export const useCollection = create<CollectionState>()(
                   closedAt: Date.now(),
                   giving: settled.givenIds,
                   receiving: settled.receivedIds,
+                  // Exact per-sticker change, so rollbackSwap can reverse it precisely.
+                  settledDelta: delta,
                   // Settlement rewrites the lists to exactly what was traded, so any
                   // parked deselections no longer apply.
                   deselectedGiving: [],
@@ -425,6 +424,19 @@ export const useCollection = create<CollectionState>()(
           );
           // Receiving new stickers counts as a collecting day.
           return { counts, swaps, ...(settled.receivedIds.length ? withActivity(s, counts) : {}) };
+        }),
+
+      rollbackSwap: (id) =>
+        set((s) => {
+          const target = s.swaps.find((sw) => sw.id === id);
+          if (!target || target.status !== 'closed') return s;
+          const counts = reverseSettlement(s.counts, target);
+          const swaps = s.swaps.map((sw) =>
+            sw.id === id
+              ? { ...sw, status: 'open' as const, closedAt: undefined, settledDelta: undefined }
+              : sw,
+          );
+          return { counts, swaps };
         }),
 
       deleteSwap: (id) => set((s) => ({ swaps: s.swaps.filter((sw) => sw.id !== id) })),
