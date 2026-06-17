@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "Figuritas-style sticker collector PWA - Album, Stats & Swaps",
+  "description": "Sticker collector PWA - Album, Stats & Swaps",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
