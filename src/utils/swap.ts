@@ -126,6 +126,24 @@ export function settleSwapCounts(
 }
 
 /**
+ * Undo a swap's settlement on the counts. Prefers the exact recorded delta;
+ * for swaps closed before settledDelta existed, falls back to a naive reversal
+ * (re-add each given sticker, remove each received one), clamped at zero.
+ */
+export function reverseSettlement(counts: Counts, swap: Swap): Counts {
+  const next: Counts = { ...counts };
+  if (swap.settledDelta) {
+    for (const [id, d] of Object.entries(swap.settledDelta)) {
+      next[id] = Math.max(0, (next[id] ?? 0) - d);
+    }
+  } else {
+    for (const id of swap.giving) next[id] = Math.max(0, (next[id] ?? 0) + 1);
+    for (const id of swap.receiving) next[id] = Math.max(0, (next[id] ?? 0) - 1);
+  }
+  return next;
+}
+
+/**
  * Cross-swap conflict sets across all OPEN swaps.
  * - giving: sticker promised to give in more open swaps than the user has spares for.
  * - receiving: missing sticker (count=0) expected from 2+ open swaps (you only need one).
