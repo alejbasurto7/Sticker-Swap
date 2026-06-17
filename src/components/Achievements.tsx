@@ -22,6 +22,9 @@ const BADGES: Record<string, string> = {
   'seeing-double': '👯',
   'first-trade': '🤝',
   'wheeler-dealer': '🔁',
+  'three-day-streak': '🗓️',
+  'week-warrior': '📆',
+  'speed-run': '⏱️',
 };
 
 export default function Achievements({ achievements }: { achievements: Achievement[] }) {

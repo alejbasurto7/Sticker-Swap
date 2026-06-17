@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useCollection } from '../store/collectionStore';
 import { computeStats, computeAchievements } from '../utils/stats';
 import { shareNodeAsImage } from '../utils/share';
@@ -13,11 +13,29 @@ const PACK_SIZE = 5;
 export default function StatsView() {
   const counts = useCollection((s) => s.counts);
   const swaps = useCollection((s) => s.swaps);
+  const firstStickerAt = useCollection((s) => s.firstStickerAt);
+  const activityDays = useCollection((s) => s.activityDays);
+  const unlockedAchievements = useCollection((s) => s.unlockedAchievements);
+  const markUnlocked = useCollection((s) => s.markUnlocked);
   const stats = useMemo(() => computeStats(counts), [counts]);
   const closedSwaps = useMemo(() => swaps.filter((s) => s.status === 'closed').length, [swaps]);
   const achievements = useMemo(
-    () => computeAchievements(stats, { closedSwaps }),
-    [stats, closedSwaps],
+    () => computeAchievements(stats, { closedSwaps, firstStickerAt, activityDays, now: Date.now() }),
+    [stats, closedSwaps, firstStickerAt, activityDays],
+  );
+
+  // Achievements are permanent: once a condition is met it's recorded, so deleting
+  // stickers later never strips an earned badge. Display = currently true OR earned.
+  useEffect(() => {
+    const newly = achievements
+      .filter((a) => a.unlocked && unlockedAchievements[a.key] == null)
+      .map((a) => a.key);
+    if (newly.length) markUnlocked(newly);
+  }, [achievements, unlockedAchievements, markUnlocked]);
+
+  const earnedAchievements = useMemo(
+    () => achievements.map((a) => ({ ...a, unlocked: a.unlocked || unlockedAchievements[a.key] != null })),
+    [achievements, unlockedAchievements],
   );
   const shareRef = useRef<HTMLDivElement>(null);
   const [sharing, setSharing] = useState(false);
@@ -108,7 +126,7 @@ export default function StatsView() {
       </div>
 
       <div className="section-title">Achievements</div>
-      <Achievements achievements={achievements} />
+      <Achievements achievements={earnedAchievements} />
 
       <div className="section-title">Progress by type</div>
       <div className="card type-progress">
