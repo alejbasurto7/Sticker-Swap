@@ -49,7 +49,11 @@ button {
 .app {
   display: flex;
   flex-direction: column;
+  /* Fill the full (dynamic) viewport even when content is short, so short tabs
+     like Swaps don't collapse to content height and leave a gap at the bottom
+     in standalone iOS PWA mode. 100% is the fallback for older browsers. */
   min-height: 100%;
+  min-height: 100dvh;
   max-width: 720px;
   margin: 0 auto;
 }
