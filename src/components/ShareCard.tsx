@@ -48,7 +48,7 @@ const ShareCard = forwardRef<HTMLDivElement, Props>(({ stats, albumName }, ref) 
         </div>
       </div>
 
-      <div className="sc-foot">{APP_NAME} PWA</div>
+      <div className="sc-foot">{APP_NAME}</div>
     </div>
   );
 });
