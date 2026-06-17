@@ -43,6 +43,12 @@ interface CollectionState {
   completedOn: string | null;
   /** Sticky ledger: achievement key -> timestamp first earned. */
   unlockedAchievements: Record<string, number>;
+  /**
+   * Monotonic counter bumped on every collection import. Lets the achievement
+   * banner tell a bulk import (celebrated as one summary) apart from coincidental
+   * multi-unlocks during normal play (each celebrated on its own).
+   */
+  importSeq: number;
 
   /** Every album the user has, including a (possibly stale) snapshot of the active one. */
   albums: AlbumSnapshot[];
@@ -174,6 +180,7 @@ export const useCollection = create<CollectionState>()(
       activityDays: [],
       completedOn: null,
       unlockedAchievements: {},
+      importSeq: 0,
       activeAlbumId: DEFAULT_ALBUM_ID,
       albums: [
         {
@@ -275,7 +282,9 @@ export const useCollection = create<CollectionState>()(
                   for (const [id, n] of Object.entries(map)) merged[id] = clampCount(n);
                   return merged;
                 })();
-          return { counts, ...(added ? withActivity(s, counts) : {}) };
+          // Bump the import marker so the achievement banner can recognise this
+          // batch as an import and summarise it rather than firing one per unlock.
+          return { counts, importSeq: s.importSeq + 1, ...(added ? withActivity(s, counts) : {}) };
         }),
 
       // Clears the collection and its live time counters for a fresh start; earned
