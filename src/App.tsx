@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ALBUM_TYPE } from './config';
 import { useCollection } from './store/collectionStore';
 import { computeStats } from './utils/stats';
@@ -21,6 +21,13 @@ export default function App() {
   const trackCC = useCollection((s) => s.trackCC);
   const albumName = useCollection((s) => s.albumName);
   const activeAlbumId = useCollection((s) => s.activeAlbumId);
+  const theme = useCollection((s) => s.theme);
+
+  // Mirror the chosen colour scheme onto the document root so the light-mode
+  // CSS variable overrides (see styles.css) take effect app-wide.
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
 
   // edition/trackCC are deps so totals recompute when the album layout changes.
   const stats = useMemo(() => computeStats(counts), [counts, edition, trackCC]);
