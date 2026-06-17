@@ -30,10 +30,11 @@ type BannerItem =
  * we prime the set of already-earned achievements so returning users aren't
  * greeted by a flood of banners for things they unlocked in a past session.
  *
- * When many achievements unlock in a single change — most notably the first
- * time a user *imports* a collection instead of starting from scratch — they
- * arrive together in one detection pass. Rather than queue a long parade of
- * banners, we coalesce them into one celebratory summary banner.
+ * Importing a collection (instead of collecting from scratch) can unlock many
+ * achievements in one go. That bulk case is coalesced into a single celebratory
+ * summary banner; achievements earned through normal play always get their own
+ * banner, even on the rare occasion two unlock at once. Imports are identified
+ * via the store's `importSeq` marker so only true imports are summarised.
  */
 export default function AchievementToaster() {
   const counts = useCollection((s) => s.counts);
@@ -43,6 +44,8 @@ export default function AchievementToaster() {
   const completedOn = useCollection((s) => s.completedOn);
   const unlockedAchievements = useCollection((s) => s.unlockedAchievements);
   const markUnlocked = useCollection((s) => s.markUnlocked);
+  const importSeq = useCollection((s) => s.importSeq);
+  const activeAlbumId = useCollection((s) => s.activeAlbumId);
 
   const stats = useMemo(
     () => computeStats(counts, { activityDays, completedOn }),
@@ -57,6 +60,9 @@ export default function AchievementToaster() {
   // Keys we've already accounted for, so each unlock is celebrated exactly once.
   // null until primed on first render.
   const announced = useRef<Set<string> | null>(null);
+  // Last-seen import marker and album, used to classify a batch of new unlocks.
+  const lastImportSeq = useRef(importSeq);
+  const lastAlbumId = useRef(activeAlbumId);
   const [queue, setQueue] = useState<BannerItem[]>([]);
   const [current, setCurrent] = useState<BannerItem | null>(null);
 
@@ -64,25 +70,35 @@ export default function AchievementToaster() {
   useEffect(() => {
     const unlockedKeys = achievements.filter((a) => a.unlocked).map((a) => a.key);
 
-    if (announced.current === null) {
-      // First pass: treat everything already earned as old news.
+    // First mount, or switching album, swaps in a whole different collection —
+    // its already-earned achievements aren't fresh accomplishments, so silently
+    // re-baseline without celebrating anything.
+    if (announced.current === null || activeAlbumId !== lastAlbumId.current) {
       announced.current = new Set([...unlockedKeys, ...Object.keys(unlockedAchievements)]);
+      lastAlbumId.current = activeAlbumId;
+      lastImportSeq.current = importSeq;
       return;
     }
+
+    // A bump in importSeq means this batch arrived via an import.
+    const isImport = importSeq !== lastImportSeq.current;
+    lastImportSeq.current = importSeq;
 
     const fresh = achievements.filter((a) => a.unlocked && !announced.current!.has(a.key));
     if (fresh.length === 0) return;
 
     for (const a of fresh) announced.current.add(a.key);
     markUnlocked(fresh.map((a) => a.key));
-    // Several at once (e.g. an import) collapse into one summary banner; a lone
-    // unlock from normal play gets its own celebratory banner.
-    const item: BannerItem =
-      fresh.length === 1
-        ? { kind: 'single', achievement: fresh[0] }
-        : { kind: 'summary', achievements: fresh };
-    setQueue((q) => [...q, item]);
-  }, [achievements, unlockedAchievements, markUnlocked]);
+
+    if (isImport && fresh.length > 1) {
+      // Bulk import: one summary banner instead of a parade.
+      setQueue((q) => [...q, { kind: 'summary', achievements: fresh }]);
+    } else {
+      // Normal play (or an import that happened to unlock just one): celebrate
+      // each achievement on its own.
+      setQueue((q) => [...q, ...fresh.map((a): BannerItem => ({ kind: 'single', achievement: a }))]);
+    }
+  }, [achievements, unlockedAchievements, markUnlocked, importSeq, activeAlbumId]);
 
   // Pull the next queued banner onto the stage once the slot is free. The short
   // delay gives a visible breather between back-to-back unlocks.
