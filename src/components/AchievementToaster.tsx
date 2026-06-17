@@ -5,7 +5,7 @@ import { badgeFor } from '../data/achievementBadges';
 import { fireConfetti } from '../utils/confetti';
 
 /** How long a single unlock banner stays on screen. */
-const BANNER_MS = 3000;
+const BANNER_MS = 5000;
 /** Gap between consecutive banners when several unlock at once. */
 const GAP_MS = 350;
 
