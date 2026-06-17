@@ -174,11 +174,14 @@ uploaded image; scanned text feeds [NewSwapDialog](../src/components/NewSwapDial
 
 ## Stats & sharing ([src/utils/stats.ts](../src/utils/stats.ts), [src/utils/share.ts](../src/utils/share.ts))
 
-`computeStats(counts)` derives totals (owned/missing/spares/collected), completion %,
-per-page progress, and the most-duplicated sticker. `computeAchievements(stats, ctx)` returns
-the gamified achievement badges (completion, type, page, duplicate, trade, streak and
+`computeStats(counts, history?)` derives totals (owned/missing/spares/collected), completion %,
+per-page progress, and the most-duplicated sticker. When given the optional `history`
+(`activityDays` + `completedOn`, persisted by the store) it also derives the current streak
+(longest run of consecutive collecting days) and days collecting (first sticker → today,
+frozen once the album is complete), both surfaced as Highlights tiles. `computeAchievements(stats, ctx)`
+returns the gamified achievement badges (completion, type, page, duplicate, trade, streak and
 speed-run milestones). Time-based badges read persisted signals from the store — a first-sticker
-timestamp and an `activityDays` log — and `StatsView` records earned badges into a sticky
+timestamp and the `activityDays` log — and `StatsView` records earned badges into a sticky
 `unlockedAchievements` ledger so they stay unlocked even if stickers are later removed.
 [StatsView](../src/components/StatsView.tsx) renders the ring,
 tiles, [BarChart](../src/components/BarChart.tsx), and

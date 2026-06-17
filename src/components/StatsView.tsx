@@ -15,9 +15,13 @@ export default function StatsView() {
   const swaps = useCollection((s) => s.swaps);
   const firstStickerAt = useCollection((s) => s.firstStickerAt);
   const activityDays = useCollection((s) => s.activityDays);
+  const completedOn = useCollection((s) => s.completedOn);
   const unlockedAchievements = useCollection((s) => s.unlockedAchievements);
   const markUnlocked = useCollection((s) => s.markUnlocked);
-  const stats = useMemo(() => computeStats(counts), [counts]);
+  const stats = useMemo(
+    () => computeStats(counts, { activityDays, completedOn }),
+    [counts, activityDays, completedOn],
+  );
   const closedSwaps = useMemo(() => swaps.filter((s) => s.status === 'closed').length, [swaps]);
   const achievements = useMemo(
     () => computeAchievements(stats, { closedSwaps, firstStickerAt, activityDays, now: Date.now() }),
@@ -122,6 +126,18 @@ export default function StatsView() {
         <div className="highlight">
           <div className="h-top">Projection to finish</div>
           <div className="h-main">{projection === null ? '🎉 Done!' : `≈ ${projection} packs`}</div>
+        </div>
+        <div className="highlight">
+          <div className="h-top">Current streak</div>
+          <div className="h-main">
+            🔥 {stats.currentStreak} {stats.currentStreak === 1 ? 'day' : 'days'}
+          </div>
+        </div>
+        <div className="highlight">
+          <div className="h-top">Days collecting</div>
+          <div className="h-main">
+            📅 {stats.daysCollecting} {stats.daysCollecting === 1 ? 'day' : 'days'}
+          </div>
         </div>
       </div>
 
