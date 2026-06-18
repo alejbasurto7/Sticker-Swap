@@ -1,7 +1,7 @@
 # Album Types — Stage 1 (Dev Authoring) — Design
 
 **Date:** 2026-06-18
-**Status:** Approved (pending spec review)
+**Status:** Implemented (Stage 1A + 1B, 2026-06-18)
 
 ## Problem
 
