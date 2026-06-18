@@ -150,6 +150,11 @@ export default function TemplateEditor() {
 
   const resetToSeeds = () => commit(clone(TEMPLATES));
 
+  // Reset only the currently-selected section's template to its code default,
+  // leaving every other section's draft untouched.
+  const resetTemplate = () =>
+    commit({ ...registry, [templateId]: clone(TEMPLATES[templateId]) });
+
   const exportSource = async () => {
     const src = templatesToSource(registry);
     try {
@@ -261,6 +266,7 @@ export default function TemplateEditor() {
           />
         </label>
         <button style={BTN} onClick={addPage}>+ page</button>
+        <button style={BTN} onClick={resetTemplate}>Reset this page to defaults</button>
         {unplacedCount > 0 && (
           <span style={{ color: '#f0b450' }}>
             {unplacedCount} sticker(s) unplaced — add slots to place them
