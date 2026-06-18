@@ -64,6 +64,9 @@ export function buildAlbumFromType(
       stickerIds,
     });
   }
+  // Album.id is the album-type definition id (e.g. '2026-fwc'), NOT the store's
+  // per-collection id — collectionStore's DEFAULT_ALBUM_ID is a separate literal.
+  // Keep the two decoupled.
   return { id: type.id, name: type.name, pages, stickers };
 }
 
@@ -183,6 +186,11 @@ const COUNTRY_SPREAD = gridTemplate('country-spread', [
   },
 ]);
 
+// The non-country templates below are seeded from the old grid: their positions
+// are rough and a landscape sticker on column 1 may overflow the page box until
+// refined in the dev-only template editor (#/admin/templates). Only orientation
+// and the country spread need to be exact.
+//
 // Specials (00,1,2,3,4): 00 on the left page; trophy halves (1,2), mascots (3),
 // emblem (4) on the right. 00,1,2,3 landscape; 4 portrait.
 const FWC_SPECIALS = gridTemplate('fwc-specials', [
