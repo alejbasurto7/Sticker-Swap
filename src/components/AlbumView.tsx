@@ -3,7 +3,6 @@ import { album } from '../data/sampleAlbum';
 import { useCollection } from '../store/collectionStore';
 import FilterBar, { type AlbumFilter } from './FilterBar';
 import PageSection from './PageSection';
-import ImportDialog from './ImportDialog';
 
 type SortMode = 'album' | 'az' | 'progress-asc' | 'progress-desc';
 
@@ -11,7 +10,6 @@ export default function AlbumView() {
   const [filter, setFilter] = useState<AlbumFilter>('all');
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState<SortMode>('album');
-  const [importOpen, setImportOpen] = useState(false);
   const counts = useCollection((s) => s.counts);
 
   const filterCounts = useMemo(() => {
@@ -54,12 +52,6 @@ export default function AlbumView() {
 
   return (
     <div>
-      <div className="toolbar">
-        <button className="btn" onClick={() => setImportOpen(true)}>
-          ⬆ Import list
-        </button>
-      </div>
-
       <FilterBar value={filter} onChange={setFilter} counts={filterCounts} />
 
       <div className="search-sort-bar">
@@ -89,8 +81,6 @@ export default function AlbumView() {
       {visiblePages.map((p) => (
         <PageSection key={p.id} page={p} filter={filter} />
       ))}
-
-      {importOpen && <ImportDialog onClose={() => setImportOpen(false)} />}
     </div>
   );
 }
