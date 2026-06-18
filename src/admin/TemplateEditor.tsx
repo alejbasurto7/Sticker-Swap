@@ -218,7 +218,7 @@ export default function TemplateEditor() {
           </select>
         </label>
         <button style={BTN} onClick={exportSource}>Export (copy + download)</button>
-        <button style={BTN} onClick={resetToSeeds}>Reset to seeds</button>
+        <button style={BTN} onClick={resetToSeeds}>Reset all to defaults</button>
       </div>
 
       <p style={{ opacity: 0.7, fontSize: 13, maxWidth: 640 }}>
