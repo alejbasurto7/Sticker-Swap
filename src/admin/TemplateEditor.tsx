@@ -38,7 +38,8 @@ const numbersFor = (s: SectionDef, variant: string): string[] =>
 
 export default function TemplateEditor() {
   const [draft, setDraft] = useState<RegistryDraft>(loadDraft);
-  const [editingTypeId, setEditingTypeId] = useState<string>(() => loadDraft().activeId);
+  // Reuse the already-loaded draft's activeId (lazy init → reads it once at mount).
+  const [editingTypeId, setEditingTypeId] = useState<string>(() => draft.activeId);
   const [previewVariantId, setPreviewVariantId] = useState<string>('');
   const [selectedSectionId, setSelectedSectionId] = useState<string>('');
 
