@@ -28,8 +28,23 @@ setAppHeight();
 window.addEventListener('resize', setAppHeight);
 window.addEventListener('orientationchange', setAppHeight);
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-);
+const root = createRoot(document.getElementById('root')!);
+
+// Dev-only template editor at #/admin/templates. The `import.meta.env.DEV`
+// guard plus the dynamic import means Vite tree-shakes this branch out of the
+// production build entirely.
+if (import.meta.env.DEV && window.location.hash.startsWith('#/admin/templates')) {
+  import('./admin/TemplateEditor').then(({ default: TemplateEditor }) => {
+    root.render(
+      <StrictMode>
+        <TemplateEditor />
+      </StrictMode>,
+    );
+  });
+} else {
+  root.render(
+    <StrictMode>
+      <App />
+    </StrictMode>,
+  );
+}
