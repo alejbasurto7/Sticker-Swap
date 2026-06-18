@@ -5,7 +5,7 @@ import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
 // Repo name for GitHub Pages project-site base path.
-const REPO = 'Sticker-Swap';
+const REPO = 'Sticker-Collector';
 
 const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf-8'));
 
