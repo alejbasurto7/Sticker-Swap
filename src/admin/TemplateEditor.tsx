@@ -257,7 +257,6 @@ export default function TemplateEditor() {
           <div
             key={pageIdx}
             ref={(el) => (pageRefs.current[pageIdx] = el)}
-            onPointerMove={onSlotPointerMove}
             style={{
               position: 'relative',
               flex: '1 1 0',
@@ -273,6 +272,7 @@ export default function TemplateEditor() {
                 key={slotIdx}
                 style={slotStyle(slot)}
                 onPointerDown={onSlotPointerDown(pageIdx, slotIdx)}
+                onPointerMove={onSlotPointerMove}
                 onPointerUp={onSlotPointerUp(pageIdx, slotIdx)}
               >
                 {slotLabel(pageIdx)[slotIdx]}
