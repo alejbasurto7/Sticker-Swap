@@ -13,7 +13,7 @@ import { albumTypesToSource } from '../serializeTemplates';
 import { pushHistory } from './history';
 import { useConfirm } from './useConfirm';
 import { BTN_SM, clone } from './ui';
-import AlbumTypeBar from './AlbumTypeBar';
+import TypeStep from './steps/TypeStep';
 import SectionsPanel from './SectionsPanel';
 import SectionFields from './SectionFields';
 import TemplateCanvas from './TemplateCanvas';
@@ -47,7 +47,7 @@ export default function BuilderShell() {
   const [draft, setDraft] = useState<RegistryDraft>(loadDraft);
   const [past, setPast] = useState<RegistryDraft[]>([]);
   const [future, setFuture] = useState<RegistryDraft[]>([]);
-  const { confirm: _confirm, element: confirmEl } = useConfirm();
+  const { confirm, element: confirmEl } = useConfirm();
   // Reuse the already-loaded draft's activeId (lazy init → reads it once at mount).
   const [editingTypeId, setEditingTypeId] = useState<string>(() => draft.activeId);
   const [previewVariantId, setPreviewVariantId] = useState<string>('');
@@ -173,14 +173,14 @@ export default function BuilderShell() {
         types={draft.types} editingTypeId={editingTypeId} previewVariant={previewVariant}
         onSelectType={selectType} onPreviewVariant={setPreviewVariantId}
         canUndo={past.length > 0} canRedo={future.length > 0} onUndo={undo} onRedo={redo}
-        onJumpExport={() => setStep('export')} />
+        onJumpExport={() => setStep('export')} onNewType={addType} />
       <BuilderRail step={step} onStep={setStep} progressPct={progressPct}
         onResetType={resetType} onResetAll={resetAll} />
       <div className="builder-workspace">
         {step === 'type' && (
-          <AlbumTypeBar types={draft.types} editingTypeId={editingTypeId} previewVariant={previewVariant}
-            onSelectType={selectType} onNewType={addType} onPreviewVariant={setPreviewVariantId}
-            onUpdateType={updateType} onExport={exportRegistry} onResetAll={resetAll} onResetType={resetType} />
+          <TypeStep type={type}
+            onRename={(name) => updateType((t) => ({ ...t, name }))}
+            onUpdateType={updateType} confirm={confirm} />
         )}
         {step === 'sections' && (
           <div className="builder-two-pane">
