@@ -29,7 +29,7 @@ export default function SectionsStep({
           confirm={confirm}
         />
         {section ? (
-          <SectionInspector type={type} section={section} onUpdateType={onUpdateType} />
+          <SectionInspector key={section.id} type={type} section={section} onUpdateType={onUpdateType} />
         ) : (
           <div className="builder-panel">
             <p style={{ opacity: 0.6 }}>Select or add a section to edit it.</p>
