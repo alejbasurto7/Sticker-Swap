@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   ALBUM_TYPES, ACTIVE_ALBUM_TYPE_ID,
   type AlbumType, type SectionDef,
@@ -10,6 +10,8 @@ import {
   type RegistryDraft,
 } from '../registryOps';
 import { albumTypesToSource } from '../serializeTemplates';
+import { pushHistory } from './history';
+import { useConfirm } from './useConfirm';
 import { BTN_SM, clone } from './ui';
 import AlbumTypeBar from './AlbumTypeBar';
 import SectionsPanel from './SectionsPanel';
@@ -43,6 +45,9 @@ const numbersFor = (s: SectionDef, variant: string): string[] =>
 
 export default function BuilderShell() {
   const [draft, setDraft] = useState<RegistryDraft>(loadDraft);
+  const [past, setPast] = useState<RegistryDraft[]>([]);
+  const [future, setFuture] = useState<RegistryDraft[]>([]);
+  const { confirm: _confirm, element: confirmEl } = useConfirm();
   // Reuse the already-loaded draft's activeId (lazy init → reads it once at mount).
   const [editingTypeId, setEditingTypeId] = useState<string>(() => draft.activeId);
   const [previewVariantId, setPreviewVariantId] = useState<string>('');
@@ -74,13 +79,32 @@ export default function BuilderShell() {
         );
 
   const commit = (next: RegistryDraft) => {
+    setPast((p) => pushHistory(p, draft));
+    setFuture([]);
     setDraft(next);
-    try {
-      localStorage.setItem(DRAFT_KEY, JSON.stringify(next));
-    } catch {
-      /* ignore quota errors */
-    }
+    try { localStorage.setItem(DRAFT_KEY, JSON.stringify(next)); } catch { /* quota */ }
   };
+  const persist = (d: RegistryDraft) => { try { localStorage.setItem(DRAFT_KEY, JSON.stringify(d)); } catch { /* quota */ } };
+  const undo = () => {
+    setPast((p) => { if (!p.length) return p; const prev = p[p.length - 1];
+      setFuture((f) => [draft, ...f]); setDraft(prev); persist(prev); return p.slice(0, -1); });
+  };
+  const redo = () => {
+    setFuture((f) => { if (!f.length) return f; const nextDraft = f[0];
+      setPast((p) => [...p, draft]); setDraft(nextDraft); persist(nextDraft); return f.slice(1); });
+  };
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== 'z') return;
+      const tag = (document.activeElement?.tagName ?? '').toUpperCase();
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      e.preventDefault();
+      e.shiftKey ? redo() : undo();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  });
 
   const updateType = (mut: (t: AlbumType) => AlbumType) =>
     commit({ ...draft, types: { ...draft.types, [editingTypeId]: mut(type) } });
@@ -144,10 +168,11 @@ export default function BuilderShell() {
 
   return (
     <div className="builder-root">
+      {confirmEl}
       <BuilderToolbar
         types={draft.types} editingTypeId={editingTypeId} previewVariant={previewVariant}
         onSelectType={selectType} onPreviewVariant={setPreviewVariantId}
-        canUndo={false} canRedo={false} onUndo={() => {}} onRedo={() => {}}
+        canUndo={past.length > 0} canRedo={future.length > 0} onUndo={undo} onRedo={redo}
         onJumpExport={() => setStep('export')} />
       <BuilderRail step={step} onStep={setStep} progressPct={progressPct}
         onResetType={resetType} onResetAll={resetAll} />
