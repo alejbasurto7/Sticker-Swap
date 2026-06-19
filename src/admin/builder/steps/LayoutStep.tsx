@@ -17,6 +17,8 @@ interface LayoutStepProps {
   onSelectSlot: (sel: SelectedSlot) => void;
   onUpdateType: (mut: (t: AlbumType) => AlbumType) => void;
   onCanvasChange: (mut: (t: SectionTemplate) => void) => void;
+  onCanvasChangeLive: (mut: (t: SectionTemplate) => void) => void;
+  onGestureStart: () => void;
   onResetTemplate: () => void;
   onCopyTemplate: (toId: string) => void;
   confirm: Confirm;
@@ -32,6 +34,8 @@ export default function LayoutStep({
   onSelectSlot,
   onUpdateType,
   onCanvasChange,
+  onCanvasChangeLive,
+  onGestureStart,
   onResetTemplate,
   onCopyTemplate,
   confirm,
@@ -115,6 +119,8 @@ export default function LayoutStep({
             template={template}
             numbers={previewNumbers}
             onChange={onCanvasChange}
+            onChangeLive={onCanvasChangeLive}
+            onGestureStart={onGestureStart}
             selected={selectedSlot}
             onSelect={onSelectSlot}
             snap={snap}
@@ -123,6 +129,8 @@ export default function LayoutStep({
             template={template}
             selected={selectedSlot}
             onChange={onCanvasChange}
+            onChangeLive={onCanvasChangeLive}
+            onGestureStart={onGestureStart}
             snap={snap}
             onSnapChange={setSnap}
           />

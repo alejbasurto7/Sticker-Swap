@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import type { SectionTemplate } from '../../data/layoutGeometry';
 import type { SelectedSlot } from './TemplateCanvas';
 
@@ -5,6 +6,8 @@ interface SlotInspectorProps {
   template: SectionTemplate;
   selected: SelectedSlot;
   onChange: (mut: (t: SectionTemplate) => void) => void;
+  onChangeLive: (mut: (t: SectionTemplate) => void) => void;
+  onGestureStart: () => void;
   snap: number;
   onSnapChange: (step: number) => void;
 }
@@ -17,8 +20,9 @@ const SNAP_OPTIONS: { label: string; value: number }[] = [
 ];
 
 export default function SlotInspector({
-  template, selected, onChange, snap, onSnapChange,
+  template, selected, onChange, onChangeLive, onGestureStart, snap, onSnapChange,
 }: SlotInspectorProps) {
+  const sliderArmed = useRef(false);
   const slot =
     selected != null
       ? template.pages[selected.pageIdx]?.slots[selected.slotIdx]
@@ -46,7 +50,13 @@ export default function SlotInspector({
         <input
           type="range" min={10} max={40} step={0.25}
           value={template.stickerWidthPct}
-          onChange={(e) => onChange((t) => { t.stickerWidthPct = Number(e.target.value); })}
+          onPointerDown={() => { sliderArmed.current = true; }}
+          onPointerUp={() => { sliderArmed.current = false; }}
+          onBlur={() => { sliderArmed.current = false; }}
+          onChange={(e) => {
+            if (sliderArmed.current) { onGestureStart(); sliderArmed.current = false; }
+            onChangeLive((t) => { t.stickerWidthPct = Number(e.target.value); });
+          }}
         />
         <span style={{ fontSize: 11, opacity: 0.7, minWidth: 36 }}>
           {template.stickerWidthPct.toFixed(1)}%
@@ -59,7 +69,13 @@ export default function SlotInspector({
         <input
           type="range" min={0.6} max={1.4} step={0.001}
           value={template.pageAspect}
-          onChange={(e) => onChange((t) => { t.pageAspect = Number(e.target.value); })}
+          onPointerDown={() => { sliderArmed.current = true; }}
+          onPointerUp={() => { sliderArmed.current = false; }}
+          onBlur={() => { sliderArmed.current = false; }}
+          onChange={(e) => {
+            if (sliderArmed.current) { onGestureStart(); sliderArmed.current = false; }
+            onChangeLive((t) => { t.pageAspect = Number(e.target.value); });
+          }}
         />
         <span style={{ fontSize: 11, opacity: 0.7, minWidth: 36 }}>
           {template.pageAspect.toFixed(3)}

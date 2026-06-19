@@ -89,6 +89,20 @@ export default function BuilderShell() {
     try { localStorage.setItem(DRAFT_KEY, JSON.stringify(next)); } catch { /* quota */ }
   };
   const persist = (d: RegistryDraft) => { try { localStorage.setItem(DRAFT_KEY, JSON.stringify(d)); } catch { /* quota */ } };
+
+  // Update draft + persist WITHOUT recording history (for live, per-tick gesture updates).
+  const commitTransient = (next: RegistryDraft) => { setDraft(next); persist(next); };
+
+  // Record ONE history checkpoint of the current draft (call once at the start of a gesture).
+  const beginGesture = () => { setPast((p) => pushHistory(p, draft)); setFuture([]); };
+
+  // Like onCanvasChange, but live (no per-tick history). Mirror onCanvasChange's clone+mut exactly.
+  const onCanvasChangeLive = (mut: (t: SectionTemplate) => void) => {
+    if (!section || !template) return;
+    const t = clone(type);
+    mut(t.templates[section.templateId]);
+    commitTransient({ ...draft, types: { ...draft.types, [editingTypeId]: t } });
+  };
   const undo = () => {
     setPast((p) => { if (!p.length) return p; const prev = p[p.length - 1];
       setFuture((f) => [draft, ...f]); setDraft(prev); persist(prev); return p.slice(0, -1); });
@@ -159,6 +173,8 @@ export default function BuilderShell() {
     });
   };
 
+  useEffect(() => () => { if (toastTimer.current) clearTimeout(toastTimer.current); }, []);
+
   const showToast = (msg: string) => {
     if (toastTimer.current) clearTimeout(toastTimer.current);
     setToast(msg);
@@ -209,6 +225,8 @@ export default function BuilderShell() {
             onSelectSlot={setSelectedSlot}
             onUpdateType={updateType}
             onCanvasChange={onCanvasChange}
+            onCanvasChangeLive={onCanvasChangeLive}
+            onGestureStart={beginGesture}
             onResetTemplate={resetTemplate}
             onCopyTemplate={onCopyTemplate}
             confirm={confirm}

@@ -12,8 +12,12 @@ interface TemplateCanvasProps {
   template: SectionTemplate;
   /** Sticker numbers in bind order — shown as the label on each real slot. */
   numbers: string[];
-  /** Apply a mutation to the live template (the parent clones + persists). */
+  /** Apply a mutation to the live template (the parent clones + persists). Records history. */
   onChange: (mut: (t: SectionTemplate) => void) => void;
+  /** Apply a mutation live (no per-tick history). Use during drag gestures. */
+  onChangeLive: (mut: (t: SectionTemplate) => void) => void;
+  /** Record ONE history checkpoint at the start of a gesture. */
+  onGestureStart: () => void;
   /** Currently selected slot (lifted to parent). */
   selected: SelectedSlot;
   /** Called when a slot is tapped (no drag). */
@@ -23,7 +27,7 @@ interface TemplateCanvasProps {
 }
 
 export default function TemplateCanvas({
-  template, numbers, onChange, selected, onSelect, snap,
+  template, numbers, onChange, onChangeLive, onGestureStart, selected, onSelect, snap,
 }: TemplateCanvasProps) {
   const bound = bindTemplate(template, numbers);
   const pageRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -44,8 +48,8 @@ export default function TemplateCanvas({
     const el = pageRefs.current[d.pageIdx];
     if (!el) return;
     const { x, y } = clientToPagePercent(e.clientX, e.clientY, el.getBoundingClientRect());
-    d.moved = true;
-    onChange((t) => {
+    if (!d.moved) { d.moved = true; onGestureStart(); }   // one checkpoint per drag
+    onChangeLive((t) => {                                  // live, no per-tick history
       const slot = t.pages[d.pageIdx].slots[d.slotIdx];
       slot.x = snap > 0 ? snapTo(x, snap) : Math.round(x * 10) / 10;
       slot.y = snap > 0 ? snapTo(y, snap) : Math.round(y * 10) / 10;
