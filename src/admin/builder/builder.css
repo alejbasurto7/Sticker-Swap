@@ -1,0 +1,102 @@
+/* Studio styles for the dev-only album builder. Scoped under .builder-root so
+   nothing leaks into the consumer app. Consumes app tokens from :root. */
+.builder-root {
+  color: var(--text);
+  background: var(--bg);
+  font: 13px/1.45 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 210px 1fr;
+  grid-template-rows: auto 1fr;
+  grid-template-areas: 'toolbar toolbar' 'rail workspace';
+}
+.builder-toolbar {
+  grid-area: toolbar;
+  display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+  padding: 10px 14px;
+  background: var(--bg-elev); border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 5;
+}
+.builder-toolbar .spacer { flex: 1; }
+.builder-rail {
+  grid-area: rail;
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 12px 10px;
+  background: var(--bg-elev); border-right: 1px solid var(--border);
+}
+.builder-rail-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 9px 11px; border-radius: var(--radius-sm);
+  background: transparent; border: 1px solid transparent;
+  color: var(--text-dim); font-weight: 700; text-align: left; cursor: pointer;
+}
+.builder-rail-item:hover { background: var(--bg-elev-2); color: var(--text); }
+.builder-rail-item.is-active { background: var(--bg-elev-2); color: var(--text); border-color: var(--border); }
+.builder-rail-item .step-index {
+  width: 20px; height: 20px; border-radius: 999px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 11px; background: var(--bg); border: 1px solid var(--border);
+}
+.builder-rail-item.is-active .step-index { background: var(--green); border-color: var(--green-bright); color: #fff; }
+.builder-rail-progress { margin-top: auto; padding-top: 12px; }
+.builder-rail-progress .bar { height: 8px; border-radius: 999px; background: var(--bg-elev-2); overflow: hidden; }
+.builder-rail-progress .bar > span { display: block; height: 100%; background: linear-gradient(90deg, var(--green), var(--green-bright)); }
+.builder-rail-footer { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+
+.builder-workspace { grid-area: workspace; padding: 16px 20px; overflow: auto; }
+.builder-panel { background: var(--bg-elev); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; margin-bottom: 14px; }
+.builder-panel > h3 { margin: 0 0 10px; font-size: 14px; }
+.builder-inspector { background: var(--bg-elev); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; }
+.builder-two-pane { display: grid; grid-template-columns: minmax(260px, 38%) 1fr; gap: 14px; align-items: start; }
+
+.builder-field-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+.builder-field-label { color: var(--text-dim); font-size: 12px; min-width: 84px; }
+.builder-root input[type='text'], .builder-input, .builder-select, .builder-textarea {
+  background: var(--bg); color: var(--text);
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 6px 8px; font: inherit;
+}
+.builder-textarea { width: 100%; box-sizing: border-box; resize: vertical; }
+.builder-root input:focus, .builder-input:focus, .builder-select:focus, .builder-textarea:focus {
+  outline: none; border-color: var(--green-bright);
+}
+
+.builder-btn {
+  background: var(--bg-elev-2); color: var(--text);
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 6px 12px; font: inherit; font-weight: 700; cursor: pointer; white-space: nowrap;
+}
+.builder-btn:hover { border-color: var(--text-dim); }
+.builder-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.builder-btn--primary { background: var(--green); border-color: var(--green-bright); color: #fff; }
+.builder-btn--danger { background: transparent; border-color: var(--red); color: var(--red); }
+.builder-btn--ghost { background: transparent; }
+.builder-btn--sm { padding: 3px 8px; font-size: 12px; }
+
+.builder-validation { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; padding: 4px 8px; border-radius: var(--radius-sm); }
+.builder-validation--warn { background: color-mix(in srgb, var(--gold) 18%, transparent); color: var(--gold); }
+.builder-validation--error { background: color-mix(in srgb, var(--red) 18%, transparent); color: var(--red); }
+.builder-validation--ok { background: color-mix(in srgb, var(--green-bright) 16%, transparent); color: var(--green-bright); }
+.builder-chip { display: inline-block; padding: 1px 7px; margin: 2px; border-radius: 999px; background: var(--bg-elev-2); border: 1px solid var(--border); font-size: 11px; }
+
+.builder-toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: var(--bg-elev); border: 1px solid var(--green-bright); color: var(--text); padding: 10px 16px; border-radius: var(--radius); z-index: 50; }
+
+/* Canvas slots (Task 5 uses these classes) */
+.builder-slot { position: absolute; transform: translate(-50%, -50%); display: flex; align-items: center; justify-content: center; border-radius: 6px; font-weight: 800; font-size: 12px; cursor: grab; touch-action: none; user-select: none; }
+.builder-slot.is-real { border: 1px solid var(--blue); background: color-mix(in srgb, var(--blue) 18%, transparent); color: #cfe0ff; }
+.builder-slot.is-decorative { border: 1px dashed var(--text-dim); background: color-mix(in srgb, #ffffff 6%, transparent); color: var(--text-dim); }
+.builder-slot.is-selected { box-shadow: 0 0 0 2px var(--gold); }
+.builder-slot.is-dragging { opacity: 0.85; box-shadow: 0 6px 16px rgba(0,0,0,0.5); z-index: 3; }
+.builder-page { position: relative; width: 100%; background: #11161d; border: 1px solid var(--border); border-radius: 8px; }
+.builder-slot-remove { position: absolute; top: -8px; right: -8px; width: 18px; height: 18px; border-radius: 9px; border: none; background: var(--red); color: #fff; font-size: 11px; line-height: 18px; padding: 0; cursor: pointer; }
+
+.builder-confirm-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.55); display: flex; align-items: center; justify-content: center; z-index: 60; }
+.builder-confirm { background: var(--bg-elev); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; max-width: 360px; }
+.builder-confirm-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px; }
+
+@media (max-width: 1100px) { .builder-two-pane { grid-template-columns: 1fr; } }
+@media (max-width: 760px) {
+  .builder-root { grid-template-columns: 1fr; grid-template-areas: 'toolbar' 'rail' 'workspace'; }
+  .builder-rail { flex-direction: row; flex-wrap: wrap; border-right: none; border-bottom: 1px solid var(--border); }
+  .builder-rail-progress, .builder-rail-footer { display: none; }
+}
