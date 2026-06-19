@@ -47,7 +47,7 @@ export default function PageSection({ page, filter, open, onToggle }: Props) {
   const visibleIds = page.stickerIds.filter((id) => {
     const c = counts[id] ?? 0;
     if (filter === 'missing') return c === 0;
-    if (filter === 'swaps') return c > 1;
+    if (filter === 'dupes') return c > 1;
     return true;
   });
 

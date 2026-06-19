@@ -1,15 +1,15 @@
-export type AlbumFilter = 'all' | 'missing' | 'swaps';
+export type AlbumFilter = 'all' | 'missing' | 'dupes';
 
 interface Props {
   value: AlbumFilter;
   onChange: (f: AlbumFilter) => void;
-  counts: { all: number; missing: number; swaps: number };
+  counts: { all: number; missing: number; dupes: number };
 }
 
 const OPTIONS: { key: AlbumFilter; label: string }[] = [
   { key: 'all', label: 'All' },
   { key: 'missing', label: 'Missing' },
-  { key: 'swaps', label: 'Swaps' },
+  { key: 'dupes', label: 'Dupes' },
 ];
 
 export default function FilterBar({ value, onChange, counts }: Props) {

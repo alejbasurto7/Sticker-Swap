@@ -97,7 +97,7 @@ export default function StickerCell({
   };
 
   const owned = count >= 1;
-  const swaps = count > 1 ? count - 1 : 0;
+  const dupes = count > 1 ? count - 1 : 0;
 
   const cls = ['cell'];
   if (owned) cls.push('owned');
@@ -118,12 +118,12 @@ export default function StickerCell({
       role="button"
       aria-disabled={locked || undefined}
       aria-label={`Sticker ${numberPrefix}${sticker.number}, ${owned ? 'owned' : 'missing'}${
-        swaps ? `, ${swaps} swaps` : ''
+        dupes ? `, ${dupes} dupes` : ''
       }`}
     >
       {numberPrefix}{sticker.number}
       {sticker.special && <span className="star">★</span>}
-      {swaps > 0 && <span className="swap-badge">+{swaps}</span>}
+      {dupes > 0 && <span className="dupe-badge">+{dupes}</span>}
     </div>
   );
 }

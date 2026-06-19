@@ -27,7 +27,7 @@ export interface Stats {
   totalStickers: number;
   ownedUnique: number;
   missing: number;
-  swapsTotal: number;
+  dupesTotal: number;
   totalCollected: number;
   completionPct: number;
   pagesCompleted: number;
@@ -96,13 +96,13 @@ export function countOf(counts: Counts, id: string): number {
 export function computeStats(counts: Counts, history?: CollectionHistory): Stats {
   const total = album.stickers.length;
   let ownedUnique = 0;
-  let swapsTotal = 0;
+  let dupesTotal = 0;
   let totalCollected = 0;
 
   for (const s of album.stickers) {
     const c = counts[s.id] ?? 0;
     if (c >= 1) ownedUnique++;
-    if (c > 1) swapsTotal += c - 1;
+    if (c > 1) dupesTotal += c - 1;
     totalCollected += c;
   }
 
@@ -161,7 +161,7 @@ export function computeStats(counts: Counts, history?: CollectionHistory): Stats
     totalStickers: total,
     ownedUnique,
     missing: total - ownedUnique,
-    swapsTotal,
+    dupesTotal,
     totalCollected,
     completionPct: total ? ownedUnique / total : 0,
     pagesCompleted: pages.filter((p) => p.complete).length,
@@ -329,19 +329,19 @@ export function computeAchievements(
       key: 'first-dupe',
       label: 'Got, Got, Need',
       description: 'Hold your first duplicate',
-      unlocked: stats.swapsTotal >= 1,
+      unlocked: stats.dupesTotal >= 1,
     },
     {
       key: 'swap-master',
       label: 'Swap Master',
       description: 'Hold 10+ duplicates',
-      unlocked: stats.swapsTotal >= 10,
+      unlocked: stats.dupesTotal >= 10,
     },
     {
       key: 'hoarder',
       label: 'Hoarder',
       description: 'Hold 50+ duplicates',
-      unlocked: stats.swapsTotal >= 50,
+      unlocked: stats.dupesTotal >= 50,
     },
     {
       key: 'seeing-double',

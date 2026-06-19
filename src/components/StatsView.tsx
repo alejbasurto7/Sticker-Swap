@@ -91,9 +91,9 @@ export default function StatsView() {
           <div className="num">{stats.missing}</div>
           <div className="lbl">Missing</div>
         </div>
-        <div className="tile swaps">
-          <div className="num">{stats.swapsTotal}</div>
-          <div className="lbl">Swaps (duplicates)</div>
+        <div className="tile dupes">
+          <div className="num">{stats.dupesTotal}</div>
+          <div className="lbl">Dupes</div>
         </div>
         <div className="tile">
           <div className="num">{stats.totalCollected}</div>

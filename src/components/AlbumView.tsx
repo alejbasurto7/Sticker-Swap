@@ -16,14 +16,15 @@ export default function AlbumView() {
   const filterCounts = useMemo(() => {
     let all = 0;
     let missing = 0;
-    let swaps = 0;
+    let dupes = 0;
     for (const s of album.stickers) {
       all++;
       const c = counts[s.id] ?? 0;
       if (c === 0) missing++;
-      if (c > 1) swaps++;
+      // Total spare copies held, not the number of distinct duplicated stickers.
+      if (c > 1) dupes += c - 1;
     }
-    return { all, missing, swaps };
+    return { all, missing, dupes };
   }, [counts]);
 
   const visiblePages = useMemo(() => {

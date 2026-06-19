@@ -145,8 +145,8 @@ assert(fullCounts['COD-11'] === 4, 'owned(1) + 3 spares = count 4');
 assert(fullCounts['BIH-2'] === 3, 'owned(1) + 2 spares = count 3');
 assert(fullCounts['CC-1'] === 0, 'CC need -> missing');
 const fullStats = computeStats(fullCounts);
-const expectedSwapsTotal = Object.values(full.swapQty).reduce((a, b) => a + b, 0);
-assert(fullStats.swapsTotal === expectedSwapsTotal, `swapsTotal = sum of spares (${expectedSwapsTotal}, got ${fullStats.swapsTotal})`);
+const expectedDupesTotal = Object.values(full.swapQty).reduce((a, b) => a + b, 0);
+assert(fullStats.dupesTotal === expectedDupesTotal, `dupesTotal = sum of spares (${expectedDupesTotal}, got ${fullStats.dupesTotal})`);
 assert(fullStats.missing === full.needs.length, `missing == needs (${full.needs.length}, got ${fullStats.missing})`);
 
 // --- Social-media preamble before the export ---

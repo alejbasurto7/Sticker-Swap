@@ -541,7 +541,7 @@ button {
   background: linear-gradient(160deg, #d9a514, #f5c542 55%, #b5860f);
   color: #3a2c00;
 }
-.cell .swap-badge {
+.cell .dupe-badge {
   position: absolute;
   top: -6px;
   right: -6px;
@@ -620,7 +620,7 @@ button {
 .tile.missing .num {
   color: var(--red);
 }
-.tile.swaps .num {
+.tile.dupes .num {
   color: var(--blue);
 }
 .tile.owned .num {

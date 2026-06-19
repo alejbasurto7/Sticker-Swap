@@ -36,9 +36,9 @@ const ShareCard = forwardRef<HTMLDivElement, Props>(({ stats, albumName }, ref) 
         </div>
         <div className="sc-stat">
           <div className="v" style={{ color: '#3b82f6' }}>
-            {stats.swapsTotal}
+            {stats.dupesTotal}
           </div>
-          <div className="l">Swaps</div>
+          <div className="l">Dupes</div>
         </div>
         <div className="sc-stat">
           <div className="v" style={{ color: '#18b563' }}>
