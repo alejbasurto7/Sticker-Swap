@@ -16,6 +16,7 @@ import { clone } from './ui';
 import TypeStep from './steps/TypeStep';
 import SectionsStep from './steps/SectionsStep';
 import LayoutStep from './steps/LayoutStep';
+import ExportStep from './steps/ExportStep';
 import { type SelectedSlot } from './TemplateCanvas';
 import BuilderToolbar from './BuilderToolbar';
 import BuilderRail from './BuilderRail';
@@ -171,22 +172,6 @@ export default function BuilderShell() {
     showToast(`Copied "${section.templateId}" to ${toId} as "${newId}".`);
   };
 
-  const exportRegistry = async () => {
-    const src = albumTypesToSource(draft.types, draft.activeId);
-    try {
-      await navigator.clipboard.writeText(src);
-    } catch {
-      /* clipboard may be blocked; the download below still works */
-    }
-    const blob = new Blob([src], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'albumTypes.generated.ts';
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
   return (
     <div className="builder-root">
       {confirmEl}
@@ -215,7 +200,6 @@ export default function BuilderShell() {
         )}
         {step === 'layout' && (
           <LayoutStep
-            type={type}
             section={section}
             template={template}
             previewNumbers={previewNumbers}
@@ -231,7 +215,7 @@ export default function BuilderShell() {
           />
         )}
         {step === 'export' && (
-          <div className="builder-panel"><button className="builder-btn builder-btn--primary" onClick={exportRegistry}>Export registry</button></div>
+          <ExportStep source={albumTypesToSource(draft.types, draft.activeId)} />
         )}
       </div>
     </div>

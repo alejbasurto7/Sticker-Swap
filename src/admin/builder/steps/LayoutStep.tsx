@@ -8,7 +8,6 @@ import SlotInspector from '../SlotInspector';
 import { ALBUM_TYPES } from '../../../data/albumTypes';
 
 interface LayoutStepProps {
-  type: AlbumType;
   section: SectionDef | undefined;
   template: SectionTemplate | undefined;
   previewNumbers: string[];

@@ -47,8 +47,8 @@ export default function TemplateCanvas({
     d.moved = true;
     onChange((t) => {
       const slot = t.pages[d.pageIdx].slots[d.slotIdx];
-      slot.x = snapTo(x, snap);
-      slot.y = snapTo(y, snap);
+      slot.x = snap > 0 ? snapTo(x, snap) : Math.round(x * 10) / 10;
+      slot.y = snap > 0 ? snapTo(y, snap) : Math.round(y * 10) / 10;
     });
   };
 
