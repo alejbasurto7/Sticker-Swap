@@ -11,8 +11,10 @@ export interface ParsedList {
   unmatched: string[];
 }
 
-// Matches a quantity suffix like "(×2)", "(x3)" or "( × 2 )".
-const QTY_RE = /\(\s*[x×]\s*(\d+)\s*\)/i;
+// Matches a quantity suffix with the multiplier either side of the digit:
+// "(×2)", "(x3)", "( × 2 )" or the reversed "(2x)", "(3 X)". The count lands in
+// group 1 (symbol-first) or group 2 (digit-first).
+const QTY_RE = /\(\s*(?:[x×]\s*(\d+)|(\d+)\s*[x×])\s*\)/i;
 
 type Section = 'needs' | 'swaps' | null;
 
@@ -82,7 +84,8 @@ export function parseExport(text: string): ParsedList {
         if (!token) continue;
         // Split an optional "(×N)" spare-count suffix off the sticker number.
         const qtyMatch = token.match(QTY_RE);
-        const qty = qtyMatch ? Math.max(parseInt(qtyMatch[1], 10), 1) : 1;
+        const qtyDigits = qtyMatch?.[1] ?? qtyMatch?.[2];
+        const qty = qtyDigits ? Math.max(parseInt(qtyDigits, 10), 1) : 1;
         const number = token.replace(QTY_RE, '').trim();
         // Sticker numbers are always digits (e.g. "00", "7"). Anything else is
         // stray prose (like the trailing "Download the app" URL) — skip silently.
