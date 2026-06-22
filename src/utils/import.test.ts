@@ -28,3 +28,12 @@ describe('parseExport spare-count suffix', () => {
     expect(p.swaps).toContain('MEX-9');
   });
 });
+
+describe('parseExport section headers', () => {
+  it('recognizes "What I have" as a swap header', () => {
+    const p = parseExport('I need\nMEX: 8\nWhat I have:\nCAN: 1(2x)');
+    expect(p.needs).toContain('MEX-8'); // stays in needs
+    expect(p.swaps).toContain('CAN-1'); // switched to swaps
+    expect(p.swapQty['CAN-1']).toBe(2);
+  });
+});

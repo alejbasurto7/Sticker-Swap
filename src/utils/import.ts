@@ -20,7 +20,7 @@ type Section = 'needs' | 'swaps' | null;
 
 // Header keywords (English + Spanish), matched case-insensitively as substrings.
 const NEED_KEYWORDS = ['i need', 'need', 'necesito', 'me faltan', 'faltan', 'busco'];
-const SWAP_KEYWORDS = ['to swap', 'swap', 'cambio', 'repe', 'tengo', 'doy'];
+const SWAP_KEYWORDS = ['to swap', 'swap', 'have', 'cambio', 'repe', 'tengo', 'doy'];
 
 const SKIP_LINES = ['figuritas app - list', 'figuritas app', 'list', 'lista'];
 
