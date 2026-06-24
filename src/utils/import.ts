@@ -1,4 +1,4 @@
-import { resolveStickerId } from '../data/sampleAlbum';
+import { resolveStickerIdFromLabel } from '../data/sampleAlbum';
 
 export interface ParsedList {
   /** Sticker ids the collector is missing. */
@@ -24,8 +24,11 @@ const SWAP_KEYWORDS = ['to swap', 'swap', 'have', 'cambio', 'repe', 'tengo', 'do
 
 const SKIP_LINES = ['figuritas app - list', 'figuritas app', 'list', 'lista'];
 
-/** A content line looks like `CODE emoji: 1, 2, 3`. */
-const CONTENT_RE = /^(.+?):\s*(.+)$/;
+// A content line is `LABEL<sep>numbers`, where LABEL is a flag emoji, country
+// code, and/or name (everything up to the first digit) and the separator is a
+// colon and/or whitespace. Both `🇲🇽 1,11` and the legacy `MEX: 1, 2` match;
+// group 1 is the label, group 2 the comma-separated numbers.
+const CONTENT_RE = /^([^\d]*?)\s*:?\s*(\d.*)$/;
 
 function classifyHeader(line: string): Section {
   const l = line.toLowerCase();
@@ -71,11 +74,9 @@ export function parseExport(text: string): ParsedList {
 
     const match = line.match(CONTENT_RE);
     if (match) {
-      // Left side holds the code + emoji; right side the comma-separated numbers.
-      const left = match[1].trim();
-      const tokens = left.split(/\s+/);
-      const code = tokens[0];
-      const emoji = tokens.slice(1).join(' ');
+      // Left side is the label (flag emoji / code / country name, any mix);
+      // right side the comma-separated numbers.
+      const label = match[1].trim();
 
       if (!section) continue; // numbers before any section header → ignore
 
@@ -90,9 +91,9 @@ export function parseExport(text: string): ParsedList {
         // Sticker numbers are always digits (e.g. "00", "7"). Anything else is
         // stray prose (like the trailing "Download the app" URL) — skip silently.
         if (!/^\d+$/.test(number)) continue;
-        const id = resolveStickerId(code, emoji, number);
+        const id = resolveStickerIdFromLabel(label, number);
         if (!id) {
-          unmatched.push(`${code} ${number}`.trim());
+          unmatched.push(`${label} ${number}`.trim());
           continue;
         }
         if (section === 'needs') {

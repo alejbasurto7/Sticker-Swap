@@ -29,6 +29,39 @@ describe('parseExport spare-count suffix', () => {
   });
 });
 
+describe('parseExport label forms (flags / names / codes)', () => {
+  it('resolves flag emoji, country name, code+flag, and bare code without colons', () => {
+    const p = parseExport(
+      [
+        'I NEED:',
+        '🇲🇽 1,11', // flag emoji, no colon, no spaces after commas
+        'Congo DR 2,3,4,8,18', // country name (reversed word order vs "DR Congo")
+        'GHA🇬🇭 16', // code glued to flag
+        'FWC 1,2,5,14,16', // bare code, FWC intro pages
+        '🏴󠁧󠁢󠁳󠁣󠁴󠁿 3,5,12', // subdivision (Scotland) tag flag
+        '🏴󠁧󠁢󠁥󠁮󠁧󠁿 2,9,13,16,', // England tag flag, trailing comma tolerated
+      ].join('\n'),
+    );
+    expect(p.needs).toContain('MEX-1');
+    expect(p.needs).toContain('MEX-11');
+    expect(p.needs).toContain('COD-2'); // DR Congo
+    expect(p.needs).toContain('COD-18');
+    expect(p.needs).toContain('GHA-16');
+    expect(p.needs).toContain('SCO-3'); // Scotland
+    expect(p.needs).toContain('ENG-16'); // England
+    // FWC intro numbers route to whichever intro page actually holds them.
+    expect(p.needs).toContain('FWC-trophy-1');
+    expect(p.needs).toContain('FWC-trophy-2');
+    expect(p.needs).toContain('FWC-world-5');
+    expect(p.unmatched).toHaveLength(0);
+  });
+
+  it('still resolves the legacy "CODE emoji: numbers" colon format', () => {
+    const p = parseExport('I need\nMEX 🇲🇽: 1, 2');
+    expect(p.needs).toEqual(expect.arrayContaining(['MEX-1', 'MEX-2']));
+  });
+});
+
 describe('parseExport section headers', () => {
   it('recognizes "What I have" as a swap header', () => {
     const p = parseExport('I need\nMEX: 8\nWhat I have:\nCAN: 1(2x)');
