@@ -1,4 +1,5 @@
 import type { Album, Edition, Page, Sticker } from '../types';
+import type { SectionDef } from './albumTypes';
 import { activeType, buildAlbumFromType, editionInfoFor } from './albumTypes';
 
 /** Per-edition metadata, derived from the active type's variants + CC section. */
@@ -46,28 +47,68 @@ export function applyEdition(edition: Edition, trackCC: boolean): void {
   pageById = indexPages(album);
 }
 
+/** Order/accent/punctuation-insensitive key for a country name ("Congo DR" ↔ "DR Congo"). */
+function nameKey(s: string): string {
+  return s
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // strip diacritics (Côte → Cote)
+    .toLowerCase()
+    .split(/[^a-z0-9]+/) // words only — drops flags, punctuation, spacing
+    .filter(Boolean)
+    .sort()
+    .join(' ');
+}
+
 /**
- * Resolve a sticker id from an import line. Intro sections share code "FWC" but
- * split across pages by emoji, so we also match the emoji when provided;
- * otherwise we fall back to whichever FWC section contains that number.
+ * Resolve which album section a free-form import label points at. The label may
+ * be a flag emoji (🇲🇽 / 🏴󠁧󠁢󠁳󠁣󠁴󠁿), a country code (MEX), a country name
+ * (Congo DR ↔ DR Congo), or any mix (GHA🇬🇭). Matching is tried flag → code →
+ * name. When several sections share a match — the FWC intro pages all use code
+ * "FWC" — the `number` picks the one that actually contains it.
+ */
+function findSection(label: string, number: string): SectionDef | undefined {
+  const sections = activeType.sections;
+  const num = number.trim();
+
+  // 1. Flag/emoji — does the label contain a section's emoji verbatim?
+  let candidates = sections.filter((s) => s.emoji && label.includes(s.emoji));
+
+  // 2. Country code — the label's ASCII letters (GHA🇬🇭 → GHA, "Congo DR" → CONGODR).
+  if (candidates.length === 0) {
+    const code = label.replace(/[^a-z]/gi, '').toUpperCase();
+    if (code) candidates = sections.filter((s) => s.code.toUpperCase() === code);
+  }
+
+  // 3. Country name — order/accent-insensitive title match.
+  if (candidates.length === 0) {
+    const key = nameKey(label);
+    if (key) candidates = sections.filter((s) => nameKey(s.title) === key);
+  }
+
+  if (candidates.length <= 1) return candidates[0];
+  // Shared code/emoji (FWC intros): pick whichever section holds the number.
+  return candidates.find((s) => stickerById[`${s.id}-${num}`]) ?? candidates[0];
+}
+
+/**
+ * Resolve a sticker id from a free-form import label + number. See findSection
+ * for the accepted label forms (flag emoji, code, country name, or a mix).
+ */
+export function resolveStickerIdFromLabel(label: string, number: string): string | undefined {
+  const section = findSection(label, number);
+  if (!section) return undefined;
+  const id = `${section.id}-${number.trim()}`;
+  return stickerById[id] ? id : undefined;
+}
+
+/**
+ * Resolve a sticker id from a separate code + emoji + number. Thin wrapper over
+ * resolveStickerIdFromLabel kept for callers that hold the parts apart (qr.ts).
  */
 export function resolveStickerId(
   code: string,
   emoji: string,
   number: string,
 ): string | undefined {
-  const normCode = code.trim().toUpperCase();
-  const normNum = number.trim();
-
-  if (normCode === 'FWC') {
-    const intro = activeType.sections.filter((s) => s.code === 'FWC');
-    const byEmoji = intro.find((s) => s.emoji === emoji.trim() && s.numbers.includes(normNum));
-    const target = byEmoji ?? intro.find((s) => s.numbers.includes(normNum));
-    if (!target) return undefined;
-    const id = `${target.id}-${normNum}`;
-    return stickerById[id] ? id : undefined;
-  }
-
-  const id = `${normCode}-${normNum}`;
-  return stickerById[id] ? id : undefined;
+  return resolveStickerIdFromLabel(`${code} ${emoji}`.trim(), number);
 }
